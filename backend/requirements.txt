@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pandas
+numpy
+polars
+redis
+pydantic
+requests
+duckdb
+python-multipart
+pytest

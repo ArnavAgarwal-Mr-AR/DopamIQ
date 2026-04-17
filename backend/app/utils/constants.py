@@ -1,0 +1,31 @@
+# Event Types
+EVENT_WATCH = "WATCH"
+EVENT_SEARCH = "SEARCH"
+EVENT_CLICK = "CLICK"
+EVENT_RATE = "RATE"
+EVENT_PAUSE = "PAUSE"
+EVENT_REWIND = "REWIND"
+
+# Session Config
+SESSION_GAP_MINUTES = 30
+BINGE_THRESHOLD = 3
+
+# Feature Defaults
+DEFAULT_FEATURE_VALUE = 0.5
+
+# Score Bounds
+MIN_SCORE = 0
+MAX_SCORE = 100
+
+# Prediction Bounds
+MIN_PROB = 0.0
+MAX_PROB = 1.0
+
+# Cache TTL
+CACHE_TTL_SECONDS = 3600
+
+# File Paths
+RAW_DATA_PATH = "data/raw"
+PROCESSED_DATA_PATH = "data/processed"
+FEATURE_DATA_PATH = "data/features"
+MODEL_PATH = "models"
