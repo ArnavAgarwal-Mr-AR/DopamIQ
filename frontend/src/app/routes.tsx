@@ -1,10 +1,10 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 
-const Dashboard = () => <div>Dashboard</div>;
-const Trends = () => <div>Trends</div>;
-const Simulation = () => <div>Simulation</div>;
-const Upload = () => <div>Upload</div>;
+import Dashboard from "../pages/Dashboard/Dashboard";
+import Trends from "../pages/Trends/Trends";
+import Simulation from "../pages/Simulation/Simulation";
+import Upload from "../pages/Upload/Upload";
 
 const AppRoutes: React.FC = () => {
   return (
