@@ -18,7 +18,7 @@ def normalize_events(df, user_id: str):
             "title": row.get("Title", "unknown"),
             "duration": duration if duration else 0,
             "device": row.get("Device Type", "unknown"),
-            "metadata": {
+            "event_metadata": {
                 "autoplay": False,
                 "completed": duration and duration > 0,
                 "genre": None,

@@ -20,7 +20,7 @@ def seed_events(user_id: str, num_events: int = 50):
             title=f"Title_{i % 5}",
             duration=1800,
             device="mobile",
-            metadata={"autoplay": False}
+            event_metadata={"autoplay": False}
         )
         events.append(event)
 

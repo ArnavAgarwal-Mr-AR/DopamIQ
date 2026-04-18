@@ -45,7 +45,7 @@ def build_features(sessions):
                 started += 1
                 titles_in_session.add(event["title"])
 
-                if event.get("metadata", {}).get("completed", False):
+                if event.get("event_metadata", {}).get("completed", False):
                     completed += 1
 
                 if event["title"] in watched_titles:
@@ -59,7 +59,7 @@ def build_features(sessions):
             if event["event_type"] == "REWIND":
                 rewinds += 1
 
-            genre = event.get("metadata", {}).get("genre")
+            genre = event.get("event_metadata", {}).get("genre")
             if genre:
                 genres.append(genre)
 
@@ -82,7 +82,7 @@ def build_features(sessions):
     ])
 
     autoplay_sessions = sum(
-        1 for s in sessions if any(e.get("metadata", {}).get("autoplay") for e in s)
+        1 for s in sessions if any(e.get("event_metadata", {}).get("autoplay") for e in s)
     )
     autoplay_ratio = autoplay_sessions / len(sessions)
 

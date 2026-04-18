@@ -15,7 +15,7 @@ class Event(Base):
     title = Column(String)
     duration = Column(Float)
     device = Column(String)
-    metadata = Column(JSON)
+    event_metadata = Column("metadata", JSON)
 
 
 class Session(Base):
