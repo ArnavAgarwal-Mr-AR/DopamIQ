@@ -20,18 +20,23 @@ def explain_behavior(
     req: ExplainRequest,
     user=Depends(get_current_user)
 ):
-    response = explain(req.scores, req.predictions)
+    response = explain(req.scores, req.predictions, user["user_id"])
 
     return {
         "explanation": response
     }
+
+from app.services.scoring_service import get_scores
 
 @router.post("/llm/simulate")
 def simulate_behavior(
     req: SimulateRequest,
     user=Depends(get_current_user)
 ):
-    result = simulate(req.scenario)
+    user_id = user["user_id"]
+    scores = get_scores(user_id)
+    
+    result = simulate(req.scenario, scores=scores)
 
     return {
         "predicted_behavior": result

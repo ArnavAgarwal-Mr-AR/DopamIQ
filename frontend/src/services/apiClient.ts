@@ -14,9 +14,12 @@ export const apiClient = async (endpoint: string, options: Options = {}) => {
     url += `?${query}`;
   }
 
+  const userId = localStorage.getItem("netflix_user_id");
+
   const response = await fetch(url, {
     headers: {
-      "Content-Type": "application/json",
+      ...(rest.headers || { "Content-Type": "application/json" }),
+      ...(userId ? { "X-User-ID": userId } : {}),
     },
     ...rest,
   });

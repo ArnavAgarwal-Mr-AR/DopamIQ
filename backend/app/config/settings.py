@@ -1,5 +1,3 @@
-# app/config/settings.py
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
@@ -8,38 +6,38 @@ class Settings(BaseSettings):
     # =========================
     # App Config
     # =========================
-    APP_NAME: str = "Behavioral Scoring Engine"
-    DEBUG: bool = True
-    VERSION: str = "1.0.0"
+    APP_NAME: str
+    DEBUG: bool
+    VERSION: str
 
     # =========================
     # Server Config
     # =========================
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    HOST: str
+    PORT: int
 
     # =========================
     # Database Config
     # =========================
-    POSTGRES_URL: str = "postgresql://user:password@localhost:5432/bse"
-    REDIS_URL: str = "redis://localhost:6379/0"
+    POSTGRES_URL: str
+    REDIS_URL: str
 
     # =========================
     # Feature Store
     # =========================
-    FEATURE_VERSION: int = 1
+    FEATURE_VERSION: int
 
     # =========================
     # ML Config
     # =========================
-    MODEL_TYPE: str = "baseline"  # baseline | xgboost | lstm
+    MODEL_TYPE: str
 
     # =========================
     # LLM Config
     # =========================
-    LLM_PROVIDER: str = "openai"
-    LLM_MODEL: str = "gpt-4o-mini"
-    LLM_TIMEOUT: int = 10
+    LLM_PROVIDER: str
+    LLM_MODEL: str
+    LLM_TIMEOUT: int
 
     model_config = SettingsConfigDict(env_file=(".env", ".env.local"), case_sensitive=True)
 

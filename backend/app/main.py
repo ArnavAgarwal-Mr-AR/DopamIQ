@@ -7,7 +7,7 @@ from app.config.settings import settings
 from app.config.logging import setup_logging, get_logger
 
 # Import routers (you will create these)
-from app.api.routes import scores, predictions, meta, llm, upload
+from app.api.routes import scores, predictions, meta, llm, upload, trends, manipulation
 
 
 # =========================
@@ -53,6 +53,8 @@ app.include_router(scores.router, prefix="/api", tags=["Scores"])
 app.include_router(predictions.router, prefix="/api", tags=["Predictions"])
 app.include_router(meta.router, prefix="/api", tags=["Meta"])
 app.include_router(llm.router, prefix="/api", tags=["LLM"])
+app.include_router(trends.router, prefix="/api", tags=["Trends"])
+app.include_router(manipulation.router, prefix="/api", tags=["Manipulation"])
 
 
 # =========================

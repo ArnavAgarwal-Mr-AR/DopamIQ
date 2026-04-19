@@ -1,6 +1,6 @@
-export const formatTrendData = (data: any[]) => {
+export const extractMetric = (data: any[], key: string) => {
   return data.map((d) => ({
     name: d.date,
-    value: d.value,
+    value: d[key],
   }));
 };

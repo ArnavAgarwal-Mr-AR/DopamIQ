@@ -1,3 +1,1 @@
-# app/api/routes/__init__.py
-
-from . import scores, predictions, meta, llm, upload
+from . import scores, predictions, meta, llm, upload, trends, manipulation

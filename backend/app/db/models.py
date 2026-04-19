@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy import Column, String, Float, Boolean, TIMESTAMP, JSON
 from sqlalchemy.sql import func
 
-from app.db.postgres import Base
+from app.db.session import Base
 
 
 class Event(Base):
@@ -92,3 +92,20 @@ class LLMOutput(Base):
     output = Column(String)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
+
+class Job(Base):
+    __tablename__ = "jobs"
+
+    job_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, index=True)
+    file_hash = Column(String, index=True)
+    file_size_bytes = Column(Float)
+    status = Column(String)
+    
+    total_events = Column(Float)
+    total_sessions = Column(Float)
+    
+    score_computed_at = Column(TIMESTAMP)  # Maps natively to Score.computed_at
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    completed_at = Column(TIMESTAMP, server_default=func.now())

@@ -1,12 +1,15 @@
 import React from "react";
 import PageContainer from "../../components/layout/PageContainer";
+import GridLayout from "../../components/layout/GridLayout";
 
-type Props = {
-  children: React.ReactNode;
-};
-
-const TrendsLayout: React.FC<Props> = ({ children }) => {
-  return <PageContainer>{children}</PageContainer>;
+const TrendsLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <PageContainer>
+      <GridLayout columns={1}>
+        {children}
+      </GridLayout>
+    </PageContainer>
+  );
 };
 
 export default TrendsLayout;

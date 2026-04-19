@@ -6,7 +6,7 @@ import redis
 from sqlalchemy.orm import Session
 
 from app.config.settings import settings
-from app.db.postgres import SessionLocal
+from app.db.session import SessionLocal
 from app.db.models import Feature  # make sure this model exists
 
 class FeatureStore:

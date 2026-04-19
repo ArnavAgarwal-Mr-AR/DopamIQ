@@ -3,8 +3,6 @@ from datetime import datetime
 import numpy as np
 
 
-def _session_duration(session):
-    return (session[-1]["timestamp"] - session[0]["timestamp"]).total_seconds()
 
 
 def _is_late_night(ts):
@@ -31,14 +29,14 @@ def build_features(sessions):
     watched_titles = set()
 
     for session in sessions:
-        duration = _session_duration(session)
+        duration = session["duration"]
         session_durations.append(duration)
 
-        if _is_late_night(session[0]["timestamp"]):
+        if _is_late_night(session["start_time"]):
             late_night_count += 1
 
         titles_in_session = set()
-        for event in session:
+        for event in session["events"]:
             total_events += 1
 
             if event["event_type"] == "WATCH":
@@ -77,12 +75,12 @@ def build_features(sessions):
     avg_titles_per_session = total_titles / len(sessions)
 
     max_binge_length = max([
-        len(set(e["title"] for e in s if e["event_type"] == "WATCH"))
+        len(set(e["title"] for e in s["events"] if e["event_type"] == "WATCH"))
         for s in sessions
     ])
 
     autoplay_sessions = sum(
-        1 for s in sessions if any(e.get("event_metadata", {}).get("autoplay") for e in s)
+        1 for s in sessions if any(e.get("event_metadata", {}).get("autoplay") for e in s["events"])
     )
     autoplay_ratio = autoplay_sessions / len(sessions)
 

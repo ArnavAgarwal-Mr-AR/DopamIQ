@@ -68,9 +68,9 @@ def compute_scores(features: dict) -> dict:
     """
 
     return {
-        "discipline": compute_discipline(features),
-        "focus": compute_focus(features),
-        "curiosity": compute_curiosity(features),
-        "consistency": compute_consistency(features),
-        "impulsivity": compute_impulsivity(features),
+        "discipline": int(round(compute_discipline(features))),
+        "focus": int(round(compute_focus(features))),
+        "curiosity": int(round(compute_curiosity(features))),
+        "consistency": int(round(compute_consistency(features))),
+        "impulsivity": int(round(compute_impulsivity(features))),
     }

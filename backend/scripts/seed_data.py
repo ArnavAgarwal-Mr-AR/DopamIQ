@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timedelta
 
-from app.db.postgres import SessionLocal
+from app.db.session import SessionLocal
 from app.db.models import Event
 
 

@@ -15,3 +15,4 @@ def fetch_scores(user=Depends(get_current_user)):
         return {"error": "No scores found"}
 
     return scores
+

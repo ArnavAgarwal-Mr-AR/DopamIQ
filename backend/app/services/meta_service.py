@@ -1,27 +1,19 @@
-from app.features.feature_store import FeatureStore
-from app.meta.predictability import compute_predictability
-from app.meta.susceptibility import compute_susceptibility
-from app.meta.drift import compute_drift
-
-feature_store = FeatureStore()
-
+from app.db.session import SessionLocal
+from app.db.models import MetaMetrics
 
 def get_meta_metrics(user_id: str):
-    features = feature_store.get_latest_features(user_id)
-
-    if not features:
-        return None
-
-    # Placeholder: need events + sessions for full predictability
-    predictability = compute_predictability([], [])
-
-    susceptibility = compute_susceptibility(features)
-
-    # Drift needs two windows — placeholder using same features
-    drift = compute_drift(features, features)
-
-    return {
-        "predictability": predictability,
-        "drift": drift,
-        "susceptibility": susceptibility
-    }
+    db = SessionLocal()
+    try:
+        # Fetch the most recent meta metrics dynamically from postgres
+        meta_record = db.query(MetaMetrics).filter(MetaMetrics.user_id == user_id).order_by(MetaMetrics.computed_at.desc()).first()
+        
+        if not meta_record:
+            return None
+            
+        return {
+            "predictability": meta_record.predictability,
+            "drift": meta_record.drift,
+            "susceptibility": meta_record.susceptibility
+        }
+    finally:
+        db.close()

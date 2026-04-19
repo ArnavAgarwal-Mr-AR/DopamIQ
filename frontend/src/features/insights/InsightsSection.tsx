@@ -9,7 +9,7 @@ type Insight = {
 };
 
 type Props = {
-  explanation: string;
+  explanation: any;
   insights: Insight[];
 };
 

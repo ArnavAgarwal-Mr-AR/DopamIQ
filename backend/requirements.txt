@@ -11,3 +11,6 @@ requests
 duckdb
 python-multipart
 pytest
+torch
+transformers
+accelerate

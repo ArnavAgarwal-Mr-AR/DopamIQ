@@ -4,12 +4,14 @@ type Props = {
   children: React.ReactNode;
   onClick?: () => void;
   variant?: "primary" | "secondary";
+  className?: string;
 };
 
 const Button: React.FC<Props> = ({
   children,
   onClick,
   variant = "primary",
+  className = "",
 }) => {
   const base = "px-4 py-2 rounded-lg text-sm font-medium transition";
 
@@ -19,7 +21,7 @@ const Button: React.FC<Props> = ({
       : "bg-gray-200 text-gray-800 hover:bg-gray-300";
 
   return (
-    <button className={`${base} ${styles}`} onClick={onClick}>
+    <button className={`${base} ${styles} ${className}`} onClick={onClick}>
       {children}
     </button>
   );
