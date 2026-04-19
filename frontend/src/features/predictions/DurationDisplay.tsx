@@ -6,9 +6,11 @@ type Props = {
 
 const DurationDisplay: React.FC<Props> = ({ minutes }) => {
   return (
-    <div className="text-center">
-      <div className="text-2xl font-semibold">{minutes} min</div>
-      <div className="text-xs text-gray-500">Expected Duration</div>
+    <div className="flex items-baseline gap-2">
+      <span className="text-7xl font-black text-white tracking-tighter tabular-nums drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+        {Math.round(minutes)}
+      </span>
+      <span className="text-xl font-black text-gray-700 italic">min</span>
     </div>
   );
 };

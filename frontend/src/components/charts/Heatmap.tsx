@@ -3,7 +3,7 @@ import React from "react";
 type HeatmapData = {
   x: string;
   y: string;
-  value: number; // 0–1
+  value: number; // raw count
 };
 
 type Props = {
@@ -23,9 +23,9 @@ const Heatmap: React.FC<Props> = ({ data }) => {
         return (
           <div
             key={idx}
-            className="w-8 h-8 rounded"
+            className="aspect-square rounded-[2px] transition-all duration-300 hover:scale-150 hover:shadow-[0_0_10px_rgba(59,130,246,0.8)] relative z-10"
             style={{
-              backgroundColor: `rgba(59,130,246, ${Math.max(Number(opacity), 0.1)})`,
+              backgroundColor: `rgba(59,130,246, ${Math.max(Number(opacity), 0.03)})`,
             }}
             title={`${cell.x} - ${cell.y}: ${cell.value} sessions`}
           />

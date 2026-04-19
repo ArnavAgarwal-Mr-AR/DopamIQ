@@ -5,15 +5,24 @@ import Navbar from "../components/layout/Navbar";
 import Sidebar from "../components/layout/Sidebar";
 
 const App: React.FC = () => {
-  const userId = localStorage.getItem("netflix_user_id");
+  const [userId, setUserId] = React.useState(localStorage.getItem("netflix_user_id"));
+
+  React.useEffect(() => {
+    // Basic polling or event listener for session changes
+    const check = () => {
+      const current = localStorage.getItem("netflix_user_id");
+      if (current !== userId) setUserId(current);
+    };
+    const inv = setInterval(check, 1000);
+    return () => clearInterval(inv);
+  }, [userId]);
 
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-black overflow-hidden">
         {userId && <Sidebar />}
 
         <div className="flex-1 flex flex-col">
-          {userId && <Navbar />}
           <main className="flex-1">
             <AppRoutes />
           </main>

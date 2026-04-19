@@ -28,22 +28,12 @@ const ExplanationBlock: React.FC<Props> = ({ text }) => {
       <div className="relative z-10 space-y-6">
         <div className="space-y-1">
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500">The Profile</span>
-          <h3 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-none italic">{text.title}</h3>
+          <h3 className="text-xl md:text-3xl font-black text-white tracking-tight leading-none italic">{text.title}</h3>
         </div>
 
-        <p className="text-lg md:text-xl text-gray-400 font-medium leading-relaxed max-w-3xl">
+        <p className="text-base text-gray-400 font-medium leading-relaxed max-w-3xl">
           {text.summary}
         </p>
-        
-        {text.traits && text.traits.length > 0 && (
-          <div className="flex flex-wrap gap-3 pt-4">
-            {text.traits.map((trait, idx) => (
-              <span key={idx} className="bg-white/5 border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full backdrop-blur-md">
-                {trait}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

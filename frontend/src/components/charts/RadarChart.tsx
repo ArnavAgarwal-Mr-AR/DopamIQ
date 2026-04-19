@@ -18,15 +18,20 @@ type Props = {
 
 const RadarChart: React.FC<Props> = ({ data }) => {
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <ReRadarChart data={data}>
-        <PolarGrid />
-        <PolarAngleAxis dataKey="subject" />
+    <ResponsiveContainer width="100%" height={300}>
+      <ReRadarChart data={data} cx="50%" cy="50%" outerRadius="80%">
+        <PolarGrid stroke="#ffffff10" />
+        <PolarAngleAxis 
+          dataKey="subject" 
+          tick={{ fill: '#ccc', fontSize: 11, fontWeight: 'bold', tracking: '0.1em' }} 
+        />
         <Radar
-          name="Score"
+          name="Personality"
           dataKey="value"
-          strokeWidth={2}
-          fillOpacity={0.4}
+          stroke="#fff"
+          strokeWidth={3}
+          fill="#3b82f6"
+          fillOpacity={0.15}
         />
       </ReRadarChart>
     </ResponsiveContainer>

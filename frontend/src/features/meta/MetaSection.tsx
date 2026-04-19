@@ -1,9 +1,5 @@
 import React from "react";
 import SectionContainer from "../../components/layout/SectionContainer";
-import MetaCard from "./MetaCard";
-import DriftIndicator from "./DriftIndicator";
-import PredictabilityGauge from "./PredictabilityGauge";
-import SusceptibilityMeter from "./SusceptibilityMeter";
 
 type Props = {
   predictability: number;
@@ -11,25 +7,21 @@ type Props = {
   susceptibility: number;
 };
 
+import MetaSpectrum from "./MetaSpectrum";
+
 const MetaSection: React.FC<Props> = ({
   predictability,
   drift,
   susceptibility,
 }) => {
   return (
-    <SectionContainer title="Meta Metrics">
-      <div className="grid grid-cols-3 gap-4">
-        <MetaCard title="Predictability">
-          <PredictabilityGauge value={predictability} />
-        </MetaCard>
-
-        <MetaCard title="Drift">
-          <DriftIndicator value={drift} />
-        </MetaCard>
-
-        <MetaCard title="Susceptibility">
-          <SusceptibilityMeter value={susceptibility} />
-        </MetaCard>
+    <SectionContainer title="The Meta Matrix">
+      <div className="glass-card p-10 mt-4 overflow-hidden">
+        <MetaSpectrum 
+          predictability={predictability}
+          drift={drift}
+          susceptibility={susceptibility}
+        />
       </div>
     </SectionContainer>
   );

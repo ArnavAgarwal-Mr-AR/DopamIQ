@@ -9,14 +9,13 @@ type Props = {
   scores: Score[];
 };
 
+import ScoreCard from "./ScoreCard";
+
 const ScoreBreakdown: React.FC<Props> = ({ scores }) => {
   return (
-    <div className="space-y-2">
+    <div className="grid grid-cols-2 gap-4">
       {scores.map((s, idx) => (
-        <div key={idx} className="flex justify-between text-sm">
-          <span>{s.subject}</span>
-          <span>{s.value}</span>
-        </div>
+        <ScoreCard key={idx} title={s.subject} value={s.value} />
       ))}
     </div>
   );

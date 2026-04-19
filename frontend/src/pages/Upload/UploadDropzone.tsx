@@ -9,12 +9,12 @@ const UploadDropzone: React.FC = () => {
     if (!file) return;
 
     setIsUploading(true);
-    setMessage("Uploading and processing your Zip... This might take a moment.");
+    setMessage("Exhuming data remains... Initializing analysis.");
 
     const formData = new FormData();
     formData.append("file", file);
 
-    let userId = localStorage.getItem("netflix_user_id") || crypto.randomUUID();
+    const userId = localStorage.getItem("netflix_user_id") || crypto.randomUUID();
 
     try {
       const response = await fetch("/api/upload", {
@@ -27,40 +27,54 @@ const UploadDropzone: React.FC = () => {
 
       if (response.ok) {
         localStorage.setItem("netflix_user_id", userId);
-        setMessage("Upload complete! Redirecting to your dashboard...");
+        setMessage("Shadow exhumed. Redirecting to your reflection...");
         setTimeout(() => {
           window.location.href = "/";
         }, 1500);
       } else {
-        setMessage("Something went wrong during the upload.");
+        setMessage("Anomaly detected. Upload failed.");
       }
     } catch (error) {
-      setMessage("Failed to connect to the server.");
+      setMessage("Intelligence failure. Check server connection.");
     } finally {
       setIsUploading(false);
     }
   };
 
   return (
-    <div className="p-8 text-center rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all group backdrop-blur-xl">
-      <input
-        type="file"
-        accept=".zip"
-        onChange={(e) => setFile(e.target.files?.[0] || null)}
-        className="mb-8 block mx-auto text-xs text-gray-400 file:mr-4 file:py-2 file:px-6 file:rounded-full file:border file:border-white/10 file:bg-transparent file:text-white file:font-bold hover:file:bg-white/5 transition-all cursor-pointer"
-      />
+    <div className="p-12 text-center relative overflow-hidden group">
+      <div className="absolute inset-0 bg-white/[0.01] pointer-events-none" />
+      
+      <div className="mb-10">
+        <label className="cursor-pointer group/label relative inline-block">
+          <input
+            type="file"
+            accept=".zip"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="hidden"
+          />
+          <div className="w-24 h-24 rounded-3xl border-2 border-dashed border-white/10 flex items-center justify-center group-hover/label:border-blue-500/50 transition-all mb-4 mx-auto bg-white/5">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-20 group-hover/label:opacity-100 transition-opacity">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 group-hover/label:text-white transition-colors duration-500">
+            {file ? file.name : "Inject ViewingActivity.zip"}
+          </p>
+        </label>
+      </div>
 
       <button
-        className="px-10 py-3 bg-white text-black font-bold rounded-full hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 transition-all shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+        className="w-full py-6 bg-white text-black font-black uppercase tracking-[0.4em] text-[11px] rounded-2xl hover:bg-blue-600 hover:text-white hover:scale-[1.01] active:scale-[0.99] disabled:opacity-20 disabled:hover:bg-white disabled:hover:text-black transition-all duration-700 shadow-2xl"
         onClick={handleUpload}
         disabled={isUploading || !file}
       >
-        {isUploading ? "Exhuming Data..." : "Reveal Your Shadow"}
+        {isUploading ? "Exhuming Digital Remains..." : "Reveal Your Shadow"}
       </button>
 
       {message && (
-        <div className="mt-8 overflow-hidden">
-          <p className={`text-sm font-bold tracking-tight animate-in fade-in slide-in-from-top-2 duration-700 ${message.includes('complete') ? 'text-blue-400' : 'text-gray-400'}`}>
+        <div className="mt-10 pt-10 border-t border-white/5">
+          <p className={`text-[10px] font-black uppercase tracking-[0.5em] ${message.includes('Shadow') ? 'text-blue-500' : 'text-gray-700'} animate-pulse`}>
             {message}
           </p>
         </div>

@@ -18,37 +18,36 @@ type Props = {
 };
 
 const ManipulationReport: React.FC<Props> = ({ data, loading }) => {
-  if (loading) return <div className="animate-pulse h-64 bg-gray-100 rounded-xl" />;
+  if (loading) return <div className="animate-pulse h-64 bg-white/5 rounded-3xl" />;
   if (!data) return null;
 
   return (
-    <div className="space-y-6">
-      <div className="bg-red-950 text-red-400 px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded border border-red-900/50 w-fit">
-        System Threat Assessment: UI Manipulation
+    <div className="space-y-12">
+      <div className="flex items-center gap-4 text-[10px] font-black tracking-[0.4em] uppercase">
+        <span className="text-gray-600">Status:</span>
+        <span className="text-red-500 animate-pulse bg-red-950/20 px-3 py-1 rounded border border-red-900/40">Critical Manipulation Risk Identified</span>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {data.metrics.map((m) => (
-          <div key={m.id} className="bg-white border border-gray-100 p-4 rounded-xl shadow-sm hover:shadow-md transition-all group">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{m.label}</span>
-              <span className={`text-lg font-black text-${m.color}-600`}>{m.value}</span>
+          <div key={m.id} className="p-6 bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col justify-between group hover:border-red-500/30 transition-all">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-[9px] font-black text-gray-700 uppercase tracking-[0.2em] group-hover:text-red-500 transition-colors">{m.label}</span>
+                <span className="text-lg font-black text-white tabular-nums">{m.value}</span>
+              </div>
+              <p className="text-[11px] text-gray-500 leading-normal font-medium opacity-60 group-hover:opacity-100 transition-opacity">
+                {m.description}
+              </p>
             </div>
-            <p className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-900 transition-colors">
-              {m.description}
-            </p>
           </div>
         ))}
       </div>
 
-      <div className="bg-gray-900 text-gray-100 p-6 rounded-xl border-l-4 border-red-600 shadow-xl overflow-hidden relative">
-        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-          <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
-          </svg>
-        </div>
-        <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-3">Intelligence Summary</h4>
-        <p className="text-base font-medium leading-relaxed italic opacity-90">
+      <div className="relative p-10 bg-[#080808] border border-white/5 rounded-3xl overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-red-900/5 blur-[100px] pointer-events-none" />
+        <h4 className="text-[9px] font-black text-red-500 uppercase tracking-[0.5em] mb-6 border-b border-red-900/20 pb-4 inline-block">Final Intelligence Memo</h4>
+        <p className="text-lg font-medium leading-relaxed italic text-gray-400 max-w-4xl">
           "{data.summary}"
         </p>
       </div>

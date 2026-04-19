@@ -27,9 +27,9 @@ const Dashboard: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="mb-12 space-y-2">
-        <h2 className="text-4xl md:text-6xl font-black tracking-tight text-white italic">Welcome back to your reflection.</h2>
-        <p className="text-gray-500 text-lg md:text-xl font-medium">The algorithm has been quietly watching your absence.</p>
+      <div className="mb-12 space-y-1">
+        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white italic whitespace-nowrap">Welcome back to your reflection.</h2>
+        <p className="text-gray-500 text-sm md:text-base font-medium">The algorithm has been quietly watching your absence.</p>
       </div>
 
       {insights && (
