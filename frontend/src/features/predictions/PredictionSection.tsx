@@ -28,8 +28,8 @@ const PredictionSection: React.FC<Props> = ({
             <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 mb-6">Probability Thresholds</h4>
             <div className="space-y-6">
               <ProbabilityBar label="Engagement Intent" value={click} color="blue" />
-              <ProbabilityBar label="Willpower Fatigue" value={abandonment} color="red" />
-              <ProbabilityBar label="Retention Loop" value={binge} color="purple" />
+              <ProbabilityBar label="Interest Attrition" value={abandonment} color="red" />
+              <ProbabilityBar label="Binge Propensity" value={binge} color="purple" />
             </div>
           </Card>
         </div>

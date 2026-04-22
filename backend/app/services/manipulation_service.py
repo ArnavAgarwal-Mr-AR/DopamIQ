@@ -36,14 +36,14 @@ def get_manipulation_report(user_id: str):
             },
             {
                 "id": "binge",
-                "label": "Loop Retention",
+                "label": "Retention Gravity",
                 "value": f"{round(retention_score)}%",
                 "description": "Probability that you will watch 3+ episodes once you start a series.",
                 "color": "purple"
             },
             {
                 "id": "willpower",
-                "label": "Willpower Fatigue",
+                "label": "Circadian Bypass",
                 "value": f"{round(late_night_ratio * 100)}%",
                 "description": "Percentage of sessions occurring when biological resistance to UI manipulation is lowest.",
                 "color": "red"

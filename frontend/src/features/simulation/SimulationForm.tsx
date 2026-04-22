@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import ScenarioInputs from "./ScenarioInputs";
-import Button from "../../components/ui/Button";
+import React, { useState, useEffect } from "react";
+import BehavioralForecastGraph from "./BehavioralForecastGraph";
 
 type Props = {
   onSubmit: (scenario: any) => void;
 };
 
 const SimulationForm: React.FC<Props> = ({ onSubmit }) => {
+  const [view, setView] = useState<'day' | 'month'>('day');
   const [scenario, setScenario] = useState({
     time: "",
     device: "mobile",
@@ -20,23 +20,43 @@ const SimulationForm: React.FC<Props> = ({ onSubmit }) => {
   const hour12 = hour % 12 || 12;
   const currentTimeString = `${dayName} ${hour12} ${ampm}`;
 
+  useEffect(() => {
+    onSubmit({ time: currentTimeString, device: "all", mode: view });
+  }, [view]);
+
   return (
     <div className="space-y-6">
-      <div className="glass-card p-10 text-center relative overflow-hidden group">
+      <div className="glass-card py-10 px-8 text-center relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none group-hover:opacity-[0.07] transition-opacity">
-          <svg width="100" height="100" viewBox="0 0 24 24" fill="white"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+          <svg width="100" height="100" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
         </div>
-        <h3 className="text-blue-500 text-[10px] font-black uppercase tracking-[0.4em] mb-3">Temporal Context Locked</h3>
-        <p className="text-4xl font-black text-white tracking-tighter">{currentTimeString}</p>
-        <p className="text-[10px] text-gray-500 mt-4 uppercase tracking-widest font-bold">Predicting session start via Desktop Web</p>
-      </div>
+        
+        <div className="flex justify-between items-center mb-6">
+            <div className="text-left">
+                <h3 className="text-blue-500 text-[9px] font-black uppercase tracking-[0.4em] mb-1">Temporal Alignment</h3>
+                <p className="text-xl font-black text-white">{view === 'day' ? dayName : 'Active Cycle'}</p>
+            </div>
+            {/* View Toggle */}
+            <div className="bg-white/5 p-1 rounded-full border border-white/10 flex gap-1">
+                <button 
+                  onClick={() => setView('day')}
+                  className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${view === 'day' ? 'bg-white text-black' : 'text-gray-500 hover:text-white'}`}
+                >Day</button>
+                <button 
+                  onClick={() => setView('month')}
+                  className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${view === 'month' ? 'bg-white text-black' : 'text-gray-500 hover:text-white'}`}
+                >Month</button>
+            </div>
+            <div className="text-right">
+                <h3 className="text-gray-600 text-[9px] font-black uppercase tracking-[0.4em] mb-1">Target Capture</h3>
+                <p className="text-xl font-black text-white">{view === 'day' ? `${hour12}:00 ${ampm}` : '30D AGGR'}</p>
+            </div>
+        </div>
 
-      <button 
-        onClick={() => onSubmit({ time: currentTimeString, device: "laptop" })} 
-        className="w-full py-4 bg-white text-black font-black uppercase tracking-[0.2em] text-xs rounded-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-      >
-        Simulate Reaction
-      </button>
+        <BehavioralForecastGraph view={view} />
+        
+        <p className="text-[9px] text-gray-600 mt-12 uppercase tracking-[0.4em] font-bold text-center">Calculated Behavioral Entropy based on {dayName} History</p>
+      </div>
     </div>
   );
 };

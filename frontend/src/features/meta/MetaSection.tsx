@@ -16,7 +16,7 @@ const MetaSection: React.FC<Props> = ({
 }) => {
   return (
     <SectionContainer title="The Meta Matrix">
-      <div className="glass-card p-10 mt-4 overflow-hidden">
+      <div className="glass-card py-24 px-10 mt-4 relative z-20">
         <MetaSpectrum 
           predictability={predictability}
           drift={drift}

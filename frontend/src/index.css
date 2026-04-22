@@ -45,3 +45,5 @@ h1, h2, h3, h4, h5, h6 {
     @apply bg-white/[0.03] backdrop-blur-2xl border border-white/[0.05] rounded-3xl transition-all duration-500;
   }
 }
+
+

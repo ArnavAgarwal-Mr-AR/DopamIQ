@@ -1,428 +1,135 @@
-# Data Processing Specification
+# Data Processing — Current State
+
+> **Last updated:** April 2026  
+> Reflects the production pipeline after forensic hardening and bug-fix sessions.
+
+---
 
 ## 1. Overview
 
-The Data Processing layer is responsible for transforming raw Netflix user dataset files into structured, clean, and unified data suitable for:
-
-- Feature engineering  
-- Behavioral modeling  
-- Prediction pipelines  
-
-This layer is **critical**, as all downstream models depend entirely on the quality of processed data.
+The data processing layer transforms a Netflix `ViewingActivity.csv` export into structured behavioral features, scores, and predictions. In practice, the system **only uses `ViewingActivity`** — other files listed in early specs (Clickstream, SearchHistory, Ratings, etc.) are not yet ingested.
 
 ---
 
-## 2. Input Dataset Structure
+## 2. Actual Input
 
-The system ingests multiple files described in the dataset cover sheet. Key files include:
+| Field | Source column | Notes |
+|-------|--------------|-------|
+| Timestamp | `Start Time` | Netflix exports in **UTC**. Converted to IST at ingest. |
+| Duration | `Duration` | `HH:MM:SS` → seconds |
+| Title | `Title` | Raw show/episode string |
+| Device | `Device Type` | Kept as-is, not used for segmentation |
+| Autoplay | `Attributes` / `Supplemental Video Type` | Detected if "Autoplay" in Attributes |
 
----
-
-### 2.1 Core Behavioral Files (Primary)
-
-| File | Purpose |
-|------|--------|
-| ViewingActivity | Core watch history |
-| PlaybackRelatedEvents | Fine-grained playback actions |
-| SearchHistory | User search behavior |
-| Clickstream | Navigation behavior |
-| Ratings | Explicit preferences |
+> **Device note:** Device type is recorded but plays **no role** in scoring or segmentation. Web and mobile sessions are treated identically.
 
 ---
 
-### 2.2 Supporting Context Files
+## 3. Pipeline Flow
 
-| File | Purpose |
-|------|--------|
-| Devices | Device usage patterns |
-| IP Addresses | Location + session context |
-| MyList | Intent signals |
-| IndicatedPreferences | Initial preference signals |
-
----
-
-### 2.3 Optional / Low Priority
-
-- Customer_Service  
-- Messages  
-- BillingHistory  
-- Surveys  
-- Games  
-
----
-
-## 3. Data Processing Pipeline
-
----
-
-### 3.1 High-Level Flow
 ```
-Raw Files
-↓
-Parsing
-↓
-Cleaning
-↓
-Normalization
-↓
-Event Unification
-↓
-Sessionization
-↓
-Processed Dataset
-```
+ViewingActivity.csv
+       ↓
+1. Ingestion (ingestion.py)
+   - Parse CSV, strip column whitespace
+   - Convert Start Time: UTC → IST (+05:30), store as naive IST datetime
+   - Convert Duration: HH:MM:SS → float seconds
+   - Drop rows with null timestamp
 
----
+       ↓
+2. Event Normalization (processing.py)
+   - Drop events with duration < 10 seconds
+   - Detect autoplay flag from Attributes column
+   - Assign event_type = "WATCH" for all rows
+   - completion proxy: duration > 900s (15 min) = completed
 
-## 4. File-Level Processing
+       ↓
+3. Sessionization (sessionization.py)
+   - Sort events by timestamp
+   - Gap threshold: 30 minutes between events = new session
+   - binge_flag = True if session has ≥2 unique titles OR duration > 5400s (1.5h)
+   - Session output: {session_id, start_time, end_time, duration, num_titles, binge_flag}
 
----
+       ↓
+4. Feature Engineering (feature_builder.py)
+   - All temporal calculations in IST (timezone-aware)
+   - Late night = 22:00–05:00 IST
+   - Consistency = day-of-week entropy (how evenly spread across Mon–Sun)
+   - Curiosity proxy = log(unique_titles) — genre data absent from Netflix CSV
+   - Rewatch ratio, novelty score, binge factor, autoplay ratio, etc.
 
-### 4.1 ViewingActivity
+       ↓
+5. Feature Normalization (feature_normalizer.py)
+   - All features scaled to [0, 1]
+   - Ranges calibrated to real Netflix viewing distributions
+   - avg_session_duration: 0–10800s (3h)
+   - genre_entropy: 0–5 (title diversity log scale)
+   - variance_usage: coefficient of variation, range 0–3
 
-#### Key Fields:
-- Start Time
-- Duration
-- Title
-- Device Type
-- Attributes
+       ↓
+6. Scoring (scoring_engine.py)
+   - Discipline, Focus, Curiosity, Consistency, Impulsivity
+   - Output: 0–100 float scores
 
-#### Processing Steps:
-- Convert `Start Time` → datetime (UTC)
-- Normalize `Duration` → seconds
-- Extract:
-  - autoplay flag
-  - interaction type
+       ↓
+7. Prediction (predictor.py)
+   - click_probability, binge_probability, abandonment_probability (0.0–1.0)
+   - expected_duration (minutes)
 
-#### Edge Cases:
-- Duration < 10 seconds → discard
-- Hidden views → optional exclusion
-
----
-
-### 4.2 PlaybackRelatedEvents
-
-#### Key Fields:
-- eventType (start, pause, seek, stop)
-- timestamps
-- offsets
-
-#### Processing:
-- Flatten playtraces
-- Extract:
-  - pause count
-  - rewind count
-  - seek behavior
-
-#### Edge Cases:
-- Missing playtraces
-- inconsistent offsets
-
----
-
-### 4.3 SearchHistory
-
-#### Key Fields:
-- Query Typed
-- Action (play, view, add)
-- Timestamp
-
-#### Processing:
-- Map actions:
-  - search → click → play chain
-- Compute:
-  - search-to-play transitions
-
----
-
-### 4.4 Clickstream
-
-#### Key Fields:
-- Navigation Level
-- Source (device)
-- Timestamp
-
-#### Processing:
-- Track navigation sequences
-- Compute:
-  - browsing depth
-  - time spent before action
-
----
-
-### 4.5 Ratings
-
-#### Key Fields:
-- Thumbs / Stars
-- Title
-- Timestamp
-
-#### Processing:
-- Normalize ratings:
-  - thumbs → numeric scale
-- Track preference strength
-
----
-
-### 4.6 Devices
-
-#### Processing:
-- Map device usage
-- Track:
-  - mobile vs TV vs desktop ratio
-
----
-
-### 4.7 IP Addresses
-
-#### Processing:
-- Extract:
-  - country
-  - region
-  - approximate location
-
-#### Note:
-- Use only for context (not precise location)
-
----
-
-## 5. Data Cleaning
-
----
-
-### 5.1 Missing Values
-
-- Replace with:
-  - defaults
-  - inferred values
-- Drop rows if critical fields missing
-
----
-
-### 5.2 Duplicate Handling
-
-- Remove identical rows
-- Deduplicate by:
-  - timestamp + title + device
-
----
-
-### 5.3 Time Standardization
-
-- Convert all timestamps → UTC
-- Align across files
-
----
-
-### 5.4 Invalid Data
-
-- Negative durations → discard
-- corrupted entries → remove
-
----
-
-## 6. Event Unification
-
----
-
-### 6.1 Objective
-
-Convert all data into a unified event stream.
-
----
-
-### 6.2 Unified Schema
-```
-{
-event_id,
-timestamp,
-event_type,
-title,
-duration,
-device,
-metadata
-}
+       ↓
+8. DB Persistence (pipeline_runner.py)
+   - Tables: events, sessions, features, scores, predictions, meta_metrics, jobs
+   - All records tagged with user_id from X-User-ID header
 ```
 
 ---
 
-### 6.3 Event Types
+## 4. Known Limitations of Current Input
 
-- WATCH
-- SEARCH
-- CLICK
-- RATE
-- NAVIGATION
-
----
-
-### 6.4 Mapping
-
-| Source | Event Type |
-|-------|-----------|
-| ViewingActivity | WATCH |
-| SearchHistory | SEARCH |
-| Clickstream | CLICK |
-| Ratings | RATE |
+| Feature | Status | Reason |
+|---------|--------|--------|
+| Genre entropy | Proxy only | Netflix CSV has no Genre column — uses title diversity instead |
+| Pause / Rewind | Always 0 | Not captured in ViewingActivity |
+| Search activity | Derived | Estimated from novelty score, not real search logs |
+| Decision time | Neutral (0.5) | No clickstream data available |
+| Completion rate | Proxy | "Completed" = duration > 15 min (no real completion signal) |
 
 ---
 
-## 7. Sessionization
+## 5. Sessionization Rules
+
+| Rule | Value | Rationale |
+|------|-------|-----------|
+| Session gap | 30 min | Standard industry threshold |
+| Binge flag | ≥2 titles OR >1.5h | Old threshold (≥3 titles) was too strict — avg 1.25 titles/session |
+| Min event duration | 10 sec | Filters accidental clicks and trailers |
 
 ---
 
-### 7.1 Definition
+## 6. Timezone Handling
 
-A session = continuous user activity window.
+**Critical:** Netflix exports timestamps in UTC. All storage and downstream feature computation assumes **IST (Asia/Kolkata, +05:30)**.
 
----
-
-### 7.2 Rules
-
-- New session if gap > 30 minutes
-- Merge overlapping events
+- Conversion happens at **ingestion time** in `ingestion.py`
+- Stored in DB as naive IST datetimes
+- SQL trend queries use `AT TIME ZONE 'Asia/Kolkata'` as a safety net for any legacy UTC-stored data
+- `feature_builder.py` applies IST offset before computing late-night ratios
 
 ---
 
-### 7.3 Output
-```
-{
-session_id,
-start_time,
-end_time,
-duration,
-num_events,
-num_titles,
-binge_flag
-}
-```
+## 7. User Isolation
+
+- Each upload generates a `crypto.randomUUID()` in the browser
+- Stored in `localStorage` as `netflix_user_id`
+- Sent as `X-User-ID` header on every API request
+- All DB queries filter by `user_id` — no data ever crosses between users
+- Default fallback: `"guest"` (zero data) if header is missing
 
 ---
 
-### 7.4 Edge Cases
+## 8. Data Coverage
 
-- Background autoplay
-- multi-device sessions
-- long idle gaps
-
----
-
-## 8. Derived Signals
-
----
-
-### 8.1 Behavioral Signals
-
-- autoplay vs user action
-- interaction intensity
-- engagement depth
-
----
-
-### 8.2 Temporal Signals
-
-- time-of-day usage
-- weekday/weekend patterns
-
----
-
-### 8.3 Decision Signals
-
-- search → play latency
-- abandonment patterns
-
----
-
-## 9. Data Storage
-
----
-
-### 9.1 Intermediate Storage
-
-- Store processed data in:
-  - Parquet files (recommended)
-  - DuckDB tables
-
----
-
-### 9.2 Final Tables
-
-- events
-- sessions
-- aggregated_logs
-
----
-
-## 10. Performance Optimization
-
----
-
-### 10.1 Techniques
-
-- Use Polars instead of Pandas
-- Columnar storage (Parquet)
-- Batch processing
-
----
-
-### 10.2 Large Dataset Handling
-
-- chunk processing
-- lazy evaluation
-
----
-
-## 11. Validation
-
----
-
-### 11.1 Checks
-
-- session continuity
-- timestamp consistency
-- feature sanity checks
-
----
-
-### 11.2 Metrics
-
-- % missing values
-- duplicate rate
-- processed vs raw ratio
-
----
-
-## 12. Edge Cases Summary
-
-- Missing files or tables  
-- Empty datasets  
-- Sparse user activity  
-- Inconsistent timestamps  
-- Multiple profiles in same dataset  
-
----
-
-## 13. Limitations
-
-- No ground truth labels  
-- Incomplete logs possible  
-- limited to Netflix ecosystem  
-
----
-
-## 14. Summary
-
-The data processing layer:
-
-- transforms raw logs into structured events  
-- builds sessions  
-- extracts behavioral signals  
-
-It ensures that downstream models receive:
-
-- clean  
-- consistent  
-- interpretable data  
-
-This layer directly determines the quality of all predictions and scores.
-
+System is designed for and tested against:
+- Date range: 2021–2026
+- Session count: ~5,000+ sessions per user
+- All-time historical analysis (no date windowing applied)

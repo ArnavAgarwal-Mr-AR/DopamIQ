@@ -36,7 +36,7 @@ def simulate_behavior(
     user_id = user["user_id"]
     scores = get_scores(user_id)
     
-    result = simulate(req.scenario, scores=scores)
+    result = simulate(req.scenario, scores=scores, user_id=user_id, mode=req.scenario.get("mode", "day"))
 
     return {
         "predicted_behavior": result

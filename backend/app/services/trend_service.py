@@ -1,22 +1,26 @@
 from datetime import datetime, timedelta
 from app.db.session import SessionLocal
 from app.db.models import Score, Session as SessionModel
-from sqlalchemy import func
+from sqlalchemy import func, literal_column, text
 
 def get_trends(user_id: str):
     db = SessionLocal()
     try:
-        # 1. Aggregate Score History By Day
-        score_results = db.query(
-            func.date_trunc('day', Score.computed_at).label('day'),
-            func.avg(Score.discipline).label('discipline'),
-            func.avg(Score.focus).label('focus'),
-            func.avg(Score.curiosity).label('curiosity'),
-            func.avg(Score.consistency).label('consistency'),
-            func.avg(Score.impulsivity).label('impulsivity')
-        ).filter(Score.user_id == user_id)\
-         .group_by(func.date_trunc('day', Score.computed_at))\
-         .order_by(func.date_trunc('day', Score.computed_at)).all()
+        # Aggregating Score History using Raw SQL for stability
+        sql = text("""
+            SELECT 
+                date_trunc('day', computed_at AT TIME ZONE 'Asia/Kolkata') as day,
+                (avg(discipline))::float as discipline,
+                (avg(focus))::float as focus,
+                (avg(curiosity))::float as curiosity,
+                (avg(consistency))::float as consistency,
+                (avg(impulsivity))::float as impulsivity
+            FROM scores
+            WHERE user_id = :user_id
+            GROUP BY day
+            ORDER BY day
+        """)
+        score_results = db.execute(sql, {"user_id": user_id}).fetchall()
 
         trends = []
         for r in score_results:
@@ -29,14 +33,18 @@ def get_trends(user_id: str):
                 "impulsivity": round(r.impulsivity, 2),
             })
 
-        # 2. Daily Watch Heatmap Metrics
-        heatmap_results = db.query(
-            func.extract('dow', SessionModel.start_time).label('dow'),
-            func.extract('hour', SessionModel.start_time).label('hour'),
-            func.count(SessionModel.session_id).label('value')
-        ).filter(SessionModel.user_id == user_id)\
-         .group_by(func.extract('dow', SessionModel.start_time), func.extract('hour', SessionModel.start_time))\
-         .order_by(func.extract('dow', SessionModel.start_time).asc(), func.extract('hour', SessionModel.start_time).asc()).all()
+        # Heatmap using Raw SQL
+        sql_heatmap = text("""
+            SELECT 
+                (extract(dow from start_time AT TIME ZONE 'Asia/Kolkata'))::int as dow,
+                (extract(hour from start_time AT TIME ZONE 'Asia/Kolkata'))::int as hour,
+                count(session_id) as value
+            FROM sessions
+            WHERE user_id = :user_id
+            GROUP BY dow, hour
+            ORDER BY dow, hour
+        """)
+        heatmap_results = db.execute(sql_heatmap, {"user_id": user_id}).fetchall()
 
         days_map = {0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat"}
         
@@ -59,3 +67,64 @@ def get_trends(user_id: str):
         }
     finally:
         db.close()
+
+def get_behavioral_signals(user_id: str, view: str = "day"):
+    db = SessionLocal()
+    try:
+        signals = []
+        if view == "day":
+            sql = text("""
+                SELECT 
+                    (extract(hour from start_time AT TIME ZONE 'Asia/Kolkata'))::int as hour_label,
+                    (avg(total_duration))::float as avg_duration,
+                    (avg(binge_flag::int))::float as binge_rate,
+                    count(session_id) as density
+                FROM sessions
+                WHERE user_id = :user_id
+                GROUP BY hour_label
+                ORDER BY hour_label
+            """)
+            results = db.execute(sql, {"user_id": user_id}).fetchall()
+            
+            max_density = max([r.density for r in results]) if results else 1
+            for i in range(24):
+                label_val = f"{i:02d}"
+                found = next((r for r in results if r.hour_label == i), None)
+                if found:
+                    # Convert to minutes with 1 decimal place for precision
+                    dur_mins = (found.avg_duration or 0) / 60
+                    signals.append({
+                        "label": label_val,
+                        "prob": round((found.density / max_density) * 100),
+                        "duration": round(dur_mins, 1),
+                        "binge": round((found.binge_rate or 0) * 100)
+                    })
+                else:
+                    signals.append({"label": label_val, "prob": 0, "duration": 0, "binge": 0})
+        else:
+            sql = text("""
+                SELECT 
+                    date_trunc('day', start_time AT TIME ZONE 'Asia/Kolkata') as label,
+                    (avg(total_duration))::float as avg_duration,
+                    (avg(binge_flag::int))::float as binge_rate,
+                    count(session_id) as density
+                FROM sessions
+                WHERE user_id = :user_id
+                GROUP BY label
+                ORDER BY label
+            """)
+            results = db.execute(sql, {"user_id": user_id}).fetchall()
+            
+            max_density = max([r.density for r in results]) if results else 1
+            for r in results:
+                dur_mins = (r.avg_duration or 0) / 60
+                signals.append({
+                    "label": r.label.strftime("%Y-%m-%d"),
+                    "prob": round((r.density / max_density) * 100),
+                    "duration": round(dur_mins, 1),
+                    "binge": round((r.binge_rate or 0) * 100)
+                })
+        
+        return signals
+    finally:
+        db.close()

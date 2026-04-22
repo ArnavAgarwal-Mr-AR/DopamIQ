@@ -58,55 +58,71 @@ def explain(scores: dict, predictions: dict, user_id: str = "demo_user"):
         "traits": traits
     }
 
+from app.services.trend_service import get_behavioral_signals
 
-def simulate(scenario: dict, scores: dict = None):
-    # Rule based simulation
+def simulate(scenario: dict, scores: dict = None, user_id: str = "demo_user", mode: str = "day"):
+    # Rule based simulation with Comparative Forensics
     scores = scores or {}
+    mode = scenario.get("mode", mode) # Detect if mode passed in payload
     
-    predicted_action = "Unknown"
-    confidence = 0.5
-    
+    # Fetch All-Time Comparative Signals
+    all_time_signals = get_behavioral_signals(user_id, view=mode)
+        # Calculate General Averages (Global Baselines)
+    if all_time_signals:
+        global_avg_prob = sum(s["prob"] for s in all_time_signals) / len(all_time_signals)
+        global_avg_dur = sum(s["duration"] for s in all_time_signals) / len(all_time_signals)
+        global_avg_binge = sum(s["binge"] for s in all_time_signals) / len(all_time_signals)
+        
+        # Calculate Active Cycle Averages (Last 20% of data or last 7 points)
+        active_sample = all_time_signals[-7:] if len(all_time_signals) > 7 else all_time_signals
+        active_avg_dur = sum(s["duration"] for s in active_sample) / len(active_sample)
+        active_avg_prob = sum(s["prob"] for s in active_sample) / len(active_sample)
+    else:
+        global_avg_prob, global_avg_dur, global_avg_binge = 30, 45, 20
+        active_avg_dur, active_avg_prob = 45, 30
+
+    # Simulation Snapshot Logic
     time_str = scenario.get("time", "").upper()
+    is_late = any(h in time_str for h in ["10 PM", "11 PM", "12 PM", "1 AM", "2 AM", "3 AM"])
     
-    # Simple semantic hour checking
-    is_late = False
-    if "PM" in time_str:
-        if any(h in time_str for h in ["10 PM", "11 PM", "12 PM"]):
-            is_late = True
-    elif "AM" in time_str:
-        if any(h in time_str for h in ["1 AM", "2 AM", "3 AM"]):
-            is_late = True
-            
-    if is_late:
-        if scores.get("discipline", 0) > 70:
-            predicted_action = "Will sleep and close app."
-            confidence = 0.85
-        else:
-            predicted_action = "High Binge Risk. Will click 'Next Episode'."
-            confidence = 0.90
-    else:
-        if scores.get("focus", 0) > 60:
-            predicted_action = "Will complete exact session intent and sign off."
-            confidence = 0.80
-        else:
-            predicted_action = "Will casually browse menus without heavy commitment."
-            confidence = 0.65
-            
-    # Deterministic duration mapping based on behavioral weights
     discipline = scores.get("discipline", 50)
-    focus = scores.get("focus", 50)
     
-    if "Binge" in predicted_action:
-        # Higher discipline slightly reduces binge length, lower discipline extends it
-        duration = 180 - (discipline / 2) + (100 - focus)
+    # Advanced Comparative Synthesis
+    analysis_blocks = []
+    
+    if mode == "day":
+        reason = "ANALYSIS REASON: Cross-referencing current 24-hour cycle against all-time daily resistance baselines."
+        
+        # Block 1: Full Day Analysis
+        analysis_blocks.append(f"{reason} | Over a full 24-hour day, the system projects a total cognitive commitment of {int(sum(s['duration'] for s in all_time_signals[:24]) if all_time_signals else 0)} forensic minutes.")
+        
+        # Block 2: Comparison to Average Day
+        diff = int(active_avg_dur) - int(global_avg_dur)
+        comparison = "surpassing" if diff > 0 else "optimizing below"
+        analysis_blocks.append(f"ALGORITHMIC GRIP: Current daily intensity is {comparison} your general baseline by {abs(diff)}m. This indicates a {('retention drift' if diff > 0 else 'sovereignty gain')} in your daily routine.")
+        
     else:
-        # Standard session length influenced by focus
-        duration = 20 + (focus / 2)
+        reason = "ANALYSIS REASON: Long-term month-over-month habit synthesis vs. multi-year behavioral averages."
+        
+        # Block 1: Full Month Analysis
+        total_monthly_volume = sum(s["duration"] for s in all_time_signals) if all_time_signals else 0
+        analysis_blocks.append(f"{reason} | This active monthly cycle represents a total dataset of {len(all_time_signals)} recording days, totaling {int(total_monthly_volume)} minutes of platform interaction.")
+        
+        # Block 2: Comparison to General Month Average
+        diff_pct = int(((active_avg_dur / global_avg_dur) - 1) * 100) if global_avg_dur > 0 else 0
+        comparison = "intensifying by" if diff_pct > 0 else "reducing by"
+        analysis_blocks.append(f"ALGORITHMIC GRIP: Your average daily duration this month ({int(active_avg_dur)}m) is {comparison} {abs(diff_pct)}% compared to your all-time monthly average of {int(global_avg_dur)}m.")
+
+    # Block 3: Final Diagnostic
+    status = "RETENTION LOOP DETECTED" if active_avg_dur > global_avg_dur else "BEHAVIORAL STABILITY MAINTAINED"
+    analysis_blocks.append(f"NEURAL COST: Your current {mode} trajectory suggests a {('high' if active_avg_prob > 50 else 'stable')} entropy state. Overall system status: {status}.")
+
+    full_detailed_summary = " | ".join(analysis_blocks)
 
     return {
-        "action": predicted_action,
-        "probability": confidence,
-        "summary": "Our behavioral engine analyzed your historical profile weights. The prediction indicates that " + predicted_action.lower(),
-        "duration": int(duration),
-        "binge": "Binge" in predicted_action
+        "action": "Comparative Diagnostic Complete",
+        "probability": active_avg_prob / 100,
+        "summary": full_detailed_summary,
+        "duration": int(active_avg_dur),
+        "binge": active_avg_dur > global_avg_dur
     }
