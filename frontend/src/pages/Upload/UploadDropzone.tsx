@@ -27,6 +27,7 @@ const UploadDropzone: React.FC = () => {
 
       if (response.ok) {
         localStorage.setItem("netflix_user_id", userId);
+        localStorage.setItem("netflix_uploaded_at", Date.now().toString());
         setMessage("Shadow exhumed. Redirecting to your reflection...");
         setTimeout(() => {
           window.location.href = "/";

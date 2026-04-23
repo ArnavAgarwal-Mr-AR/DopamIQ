@@ -1,26 +1,21 @@
-import redis
-from app.config.settings import settings
+"""
+Redis removed. Caching is now handled by the browser (30-min localStorage TTL).
+This file is kept as a no-op stub to avoid import errors.
+"""
 
+class _NoOpRedis:
+    def get(self, key): return None
+    def set(self, key, value, ex=None): pass
+    def delete(self, key): pass
+    def ping(self): return True
 
 class RedisClient:
     def __init__(self):
-        self.client = redis.Redis.from_url(
-            settings.REDIS_URL,
-            decode_responses=True
-        )
+        self.client = _NoOpRedis()
 
-    def get(self, key: str):
-        return self.client.get(key)
-
-    def set(self, key: str, value: str, ex: int = None):
-        self.client.set(key, value, ex=ex)
-
-    def delete(self, key: str):
-        self.client.delete(key)
-
-    def exists(self, key: str) -> bool:
-        return self.client.exists(key) == 1
+    def get(self, key): return None
+    def set(self, key, value, ttl=None): pass
+    def delete(self, key): pass
 
 
-# Singleton
 redis_client = RedisClient()

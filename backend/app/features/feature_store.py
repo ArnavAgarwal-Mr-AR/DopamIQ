@@ -1,47 +1,18 @@
-import json
+"""
+Feature store — Redis removed. All reads/writes go directly to PostgreSQL.
+Browser-side 30-min TTL handles session freshness.
+"""
 from datetime import datetime
 from typing import Optional, Dict, Any
 
-import redis
 from sqlalchemy.orm import Session
 
 from app.config.settings import settings
 from app.db.session import SessionLocal
-from app.db.models import Feature  # make sure this model exists
+from app.db.models import Feature
+
 
 class FeatureStore:
-    def __init__(self):
-        # Redis client (optional but recommended)
-        self.redis_client = redis.Redis.from_url(
-            settings.REDIS_URL,
-            decode_responses=True
-        )
-
-    # =========================
-    # Redis Helpers
-    # =========================
-    def _redis_key(self, user_id: str) -> str:
-        return f"features:{user_id}"
-
-    def _cache_features(self, user_id: str, features: Dict[str, Any]):
-        try:
-            self.redis_client.set(
-                self._redis_key(user_id),
-                json.dumps(features),
-                ex=3600  # 1 hour TTL
-            )
-        except Exception:
-            pass  # fail silently
-
-    def _get_cached_features(self, user_id: str) -> Optional[Dict[str, Any]]:
-        try:
-            data = self.redis_client.get(self._redis_key(user_id))
-            if data:
-                return json.loads(data)
-        except Exception:
-            return None
-
-        return None
 
     # =========================
     # Store Features
@@ -55,11 +26,9 @@ class FeatureStore:
         db: Optional[Session] = None
     ):
         close_db = False
-
         if db is None:
             db = SessionLocal()
             close_db = True
-
         try:
             feature_row = Feature(
                 user_id=user_id,
@@ -69,13 +38,8 @@ class FeatureStore:
                 feature_version=settings.FEATURE_VERSION,
                 values=features
             )
-
             db.add(feature_row)
             db.commit()
-
-            # Cache in Redis
-            self._cache_features(user_id, features)
-
         finally:
             if close_db:
                 db.close()
@@ -88,18 +52,10 @@ class FeatureStore:
         user_id: str,
         db: Optional[Session] = None
     ) -> Optional[Dict[str, Any]]:
-
-        # 1. Try Redis first
-        cached = self._get_cached_features(user_id)
-        if cached:
-            return cached
-
         close_db = False
-
         if db is None:
             db = SessionLocal()
             close_db = True
-
         try:
             feature_row = (
                 db.query(Feature)
@@ -107,17 +63,7 @@ class FeatureStore:
                 .order_by(Feature.computed_at.desc())
                 .first()
             )
-
-            if not feature_row:
-                return None
-
-            features = feature_row.values
-
-            # Cache result
-            self._cache_features(user_id, features)
-
-            return features
-
+            return feature_row.values if feature_row else None
         finally:
             if close_db:
                 db.close()
@@ -132,13 +78,10 @@ class FeatureStore:
         end: datetime,
         db: Optional[Session] = None
     ) -> Optional[Dict[str, Any]]:
-
         close_db = False
-
         if db is None:
             db = SessionLocal()
             close_db = True
-
         try:
             feature_row = (
                 db.query(Feature)
@@ -148,21 +91,13 @@ class FeatureStore:
                 .order_by(Feature.computed_at.desc())
                 .first()
             )
-
-            if not feature_row:
-                return None
-
-            return feature_row.values
-
+            return feature_row.values if feature_row else None
         finally:
             if close_db:
                 db.close()
 
     # =========================
-    # Invalidate Cache
+    # Invalidate (no-op — browser handles TTL)
     # =========================
     def invalidate_cache(self, user_id: str):
-        try:
-            self.redis_client.delete(self._redis_key(user_id))
-        except Exception:
-            pass
+        pass  # Cache lives in browser localStorage, not server-side

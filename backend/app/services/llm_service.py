@@ -1,12 +1,6 @@
 import hashlib
 import json
-import redis
 from app.config.settings import settings
-
-try:
-    redis_client = redis.from_url(settings.REDIS_URL)
-except Exception:
-    redis_client = None
 
 def explain(scores: dict, predictions: dict, user_id: str = "demo_user"):
     # Deterministic Rule-Based Engine
