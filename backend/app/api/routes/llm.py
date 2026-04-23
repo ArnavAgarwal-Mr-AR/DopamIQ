@@ -39,12 +39,12 @@ def simulate_behavior(
     user_id = user["user_id"]
     scores = get_scores(user_id)
     
+    # Debug logging to catch identity and payload
     mode = req.scenario.get("mode", "day")
-    logger.info(f"SIMULATE_START: User={user_id} Mode={mode} Scenario={req.scenario}")
+    logger.info(f"DEBUG: Simulation Request - User: {user_id} | Payload: {req.scenario}")
     
     result = simulate(req.scenario, scores=scores, user_id=user_id, mode=mode)
 
     return {
         "predicted_behavior": result
     }
-

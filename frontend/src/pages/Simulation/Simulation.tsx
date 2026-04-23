@@ -9,12 +9,10 @@ import type { ViewMode } from "../../features/simulation/BehavioralForecastGraph
 
 const Simulation: React.FC = () => {
   const [result, setResult] = useState<any>(null);
-  const [currentView, setCurrentView] = useState<ViewMode>('day');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (scenario: any) => {
-    const view: ViewMode = scenario.mode || 'day';
-    setCurrentView(view);
-
+    setLoading(true);
     const payload = formatSimulationInput(scenario);
 
     try {
@@ -27,18 +25,20 @@ const Simulation: React.FC = () => {
       setResult(parsed);
     } catch {
       // apiClient handles session expiry redirect
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <SimulationLayout>
       <SimulationForm onSubmit={handleSubmit} />
-
-      <SimulationResult result={result} />
-
-      {result && <SimulationSummary summary={result.summary} view={currentView} />}
+      
+      {/* Simulation Result: HUD + Strategy Brief */}
+      <SimulationSummary data={result} loading={loading} view="day" />
     </SimulationLayout>
   );
 };
+
 
 export default Simulation;

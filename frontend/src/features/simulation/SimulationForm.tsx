@@ -1,83 +1,106 @@
 import React, { useState, useEffect } from "react";
-import BehavioralForecastGraph, { ViewMode } from "./BehavioralForecastGraph";
 
 type Props = {
   onSubmit: (scenario: any) => void;
 };
 
-const VIEW_LABELS: Record<ViewMode, string> = {
-  day:   'Hourly Pattern',
-  month: 'Last 30 Days',
-  year:  'All-Time History',
-};
-
-const TARGET_LABELS: Record<ViewMode, string> = {
-  day:   '',       // filled dynamically with current time
-  month: '30D AGGR',
-  year:  'ANNUAL',
-};
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const PHASES = [
+  { label: 'Dawn', time: '5 AM' },
+  { label: 'Morning', time: '10 AM' },
+  { label: 'Afternoon', time: '2 PM' },
+  { label: 'Evening', time: '7 PM' },
+  { label: 'Late Night', time: '1 AM' }
+];
+const DEVICES = ['Mobile', 'Smart TV', 'Desktop / Web'];
 
 const SimulationForm: React.FC<Props> = ({ onSubmit }) => {
-  const [view, setView] = useState<ViewMode>('day');
+  const [day, setDay] = useState('Friday');
+  const [phase, setPhase] = useState(PHASES[4]); // Default to Late Night
+  const [device, setDevice] = useState('Smart TV');
 
-  const now = new Date();
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const dayName = days[now.getDay()];
-  const hour = now.getHours();
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  const currentTimeString = `${dayName} ${hour12} ${ampm}`;
+  const triggerSubmit = () => {
+    onSubmit({
+      time: `${day} ${phase.time}`,
+      device: device.toLowerCase(),
+      mode: 'day' // Simulation is always a 'day' context prediction
+    });
+  };
 
+  // Initial trigger
   useEffect(() => {
-    onSubmit({ time: currentTimeString, device: "all", mode: view });
-  }, [view]);
-
-  const headerLeft = view === 'day' ? dayName : VIEW_LABELS[view];
-  const headerRight = view === 'day' ? `${hour12}:00 ${ampm}` : TARGET_LABELS[view];
+    triggerSubmit();
+  }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="glass-card py-10 px-8 text-center relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none group-hover:opacity-[0.07] transition-opacity">
-          <svg width="100" height="100" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-        </div>
-
-        <div className="flex justify-between items-center mb-6">
-          {/* Left: context label */}
-          <div className="text-left">
-            <h3 className="text-blue-500 text-[9px] font-black uppercase tracking-[0.4em] mb-1">Temporal Alignment</h3>
-            <p className="text-xl font-black text-white">{headerLeft}</p>
-          </div>
-
-          {/* Centre: 3-way toggle */}
-          <div className="bg-white/5 p-1 rounded-full border border-white/10 flex gap-1">
-            {(['day', 'month', 'year'] as ViewMode[]).map((v) => (
+    <div className="glass-card p-10 relative overflow-hidden group mb-12">
+      <div className="flex flex-col md:flex-row gap-12 justify-between items-start">
+        
+        {/* 1. Day Selector */}
+        <div className="flex-1">
+          <h4 className="text-[9px] font-black text-blue-500 uppercase tracking-[0.4em] mb-6">01 // Temporal Day</h4>
+          <div className="flex flex-wrap gap-2">
+            {DAYS.map(d => (
               <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${
-                  view === v ? 'bg-white text-black' : 'text-gray-500 hover:text-white'
+                key={d}
+                onClick={() => { setDay(d); setTimeout(triggerSubmit, 10); }}
+                className={`px-3 py-2 rounded text-[10px] font-black transition-all border ${
+                  day === d ? 'bg-white text-black border-white' : 'bg-transparent text-gray-500 border-white/10 hover:border-white/30'
                 }`}
               >
-                {v}
+                {d.slice(0, 3).toUpperCase()}
               </button>
             ))}
           </div>
+        </div>
 
-          {/* Right: time / range label */}
-          <div className="text-right">
-            <h3 className="text-gray-600 text-[9px] font-black uppercase tracking-[0.4em] mb-1">Target Capture</h3>
-            <p className="text-xl font-black text-white">{headerRight}</p>
+        {/* 2. Phase Selector */}
+        <div className="flex-1">
+          <h4 className="text-[9px] font-black text-amber-500 uppercase tracking-[0.4em] mb-6">02 // Diurnal Phase</h4>
+          <div className="grid grid-cols-2 gap-2 w-full">
+            {PHASES.map(p => (
+              <button
+                key={p.label}
+                onClick={() => { setPhase(p); setTimeout(triggerSubmit, 10); }}
+                className={`px-4 py-3 rounded-xl text-left transition-all border flex justify-between items-center ${
+                  phase.label === p.label ? 'bg-amber-500/10 border-amber-500 text-white' : 'bg-transparent text-gray-600 border-white/5 hover:border-white/20'
+                }`}
+              >
+                <span className="text-[10px] font-black uppercase tracking-widest">{p.label}</span>
+                <span className="text-[8px] font-medium opacity-50">{p.time}</span>
+              </button>
+            ))}
           </div>
         </div>
 
-        <BehavioralForecastGraph view={view} />
+        {/* 3. Device Selector */}
+        <div className="flex-1 w-full md:w-auto">
+          <h4 className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-6">03 // Device Context</h4>
+          <div className="space-y-2">
+            {DEVICES.map(dev => (
+              <button
+                key={dev}
+                onClick={() => { setDevice(dev); setTimeout(triggerSubmit, 10); }}
+                className={`w-full px-4 py-3 rounded-xl text-left transition-all border flex items-center gap-3 ${
+                  device === dev ? 'bg-emerald-500/10 border-emerald-500 text-white' : 'bg-transparent text-gray-600 border-white/5 hover:border-white/20'
+                }`}
+              >
+                <div className={`w-1.5 h-1.5 rounded-full ${device === dev ? 'bg-emerald-500 animate-pulse' : 'bg-white/10'}`} />
+                <span className="text-[10px] font-black uppercase tracking-widest">{dev}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <p className="text-[9px] text-gray-600 mt-12 uppercase tracking-[0.4em] font-bold text-center">
-          {view === 'day'   && `Hourly activity pattern — all-time ${dayName} history`}
-          {view === 'month' && 'Daily activity — last 30 days'}
-          {view === 'year'  && 'Monthly aggregates — full history'}
+      </div>
+
+      <div className="mt-12 pt-8 border-t border-white/5 flex justify-between items-center">
+        <p className="text-[8px] text-gray-600 font-black uppercase tracking-[0.4em]">
+          Target: {day.toUpperCase()} // {phase.label.toUpperCase()} // {device.toUpperCase()}
         </p>
+        <div className="flex gap-1">
+          {[1,2,3].map(i => <div key={i} className="w-1 h-1 rounded-full bg-white/10" />)}
+        </div>
       </div>
     </div>
   );

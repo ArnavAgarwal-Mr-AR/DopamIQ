@@ -54,13 +54,17 @@ export const apiClient = async (endpoint: string, options: Options = {}) => {
 
   const userId = localStorage.getItem(SESSION_KEYS.userId);
 
+  // Hard-inject the identity header to prevent proxy stripping
+  const headers = {
+    ...(rest.headers || { "Content-Type": "application/json" }),
+    "X-User-ID": userId || "guest",
+  };
+
   const response = await fetch(url, {
     ...rest,
-    headers: {
-      ...(rest.headers || { "Content-Type": "application/json" }),
-      ...(userId ? { "X-User-ID": userId } : {}),
-    },
+    headers,
   });
+
 
 
   if (!response.ok) {
