@@ -20,62 +20,79 @@ print(f"Recomputing {len(users)} users")
 for (user_id,) in users:
     print(f"\n{user_id[:8]}...")
 
-    # ── Session-level aggregation with personalized completion threshold ──
+    # ── Exponential-decay weighted session aggregation ────────────
+    # weight = exp(-days_ago / 90) → 90-day half-life
+    # 0 days ago = 1.0, 90 days ago ≈ 0.37, 1 year ago ≈ 0.02, 2021 ≈ ~0.0
     r = db.execute(text("""
-        WITH user_avg AS (
-            SELECT avg(total_duration) AS avg_dur
-            FROM sessions WHERE user_id = :uid
+        WITH weighted AS (
+            SELECT
+                s.*,
+                exp(-extract('day' FROM (NOW() - s.start_time)) / 90.0) AS w
+            FROM sessions s
+            WHERE s.user_id = :uid
+        ),
+        user_wavg AS (
+            SELECT sum(total_duration * w) / NULLIF(sum(w), 0) AS avg_dur
+            FROM weighted
         )
         SELECT
-            count(*)                                            AS total_sessions,
-            user_avg.avg_dur                                    AS avg_dur,
-            stddev(s.total_duration)                            AS std_dur,
-            avg(s.num_titles)                                   AS avg_titles,
-            sum(CASE WHEN s.binge_flag THEN 1 ELSE 0 END)::float
-                / NULLIF(count(*), 0)                          AS binge_factor,
-            sum(CASE WHEN (extract(hour FROM s.start_time) >= 22
-                           OR extract(hour FROM s.start_time) < 5)
-                     THEN 1 ELSE 0 END)::float
-                / NULLIF(count(*), 0)                          AS late_night_ratio,
-            -- Personalized: completed = session > 60% of user's own avg duration
-            sum(CASE WHEN s.total_duration > (user_avg.avg_dur * 0.6)
-                     THEN 1 ELSE 0 END)::float
-                / NULLIF(count(*), 0)                          AS completion_rate,
-            count(DISTINCT date_trunc('day', s.start_time))    AS active_days,
-            extract('day' FROM (max(s.start_time) - min(s.start_time))) + 1
+            sum(w)                                              AS total_weight,
+            user_wavg.avg_dur                                   AS avg_dur,
+            -- Weighted std approximation via variance
+            sqrt(sum(w * (total_duration - user_wavg.avg_dur)^2)
+                 / NULLIF(sum(w), 0))                          AS std_dur,
+            sum(num_titles * w) / NULLIF(sum(w), 0)            AS avg_titles,
+            -- Weighted binge factor
+            sum(CASE WHEN binge_flag THEN w ELSE 0 END)
+                / NULLIF(sum(w), 0)                            AS binge_factor,
+            -- Weighted late-night ratio (IST stored, no conversion needed)
+            sum(CASE WHEN (extract(hour FROM start_time) >= 22
+                           OR extract(hour FROM start_time) < 5)
+                     THEN w ELSE 0 END)
+                / NULLIF(sum(w), 0)                            AS late_night_ratio,
+            -- Weighted completion: session > 60% of weighted-avg duration
+            sum(CASE WHEN total_duration > (user_wavg.avg_dur * 0.6)
+                     THEN w ELSE 0 END)
+                / NULLIF(sum(w), 0)                            AS completion_rate,
+            count(DISTINCT date_trunc('day', start_time))      AS active_days,
+            extract('day' FROM (max(start_time) - min(start_time))) + 1
                                                                AS total_span_days
-        FROM sessions s, user_avg
-        WHERE s.user_id = :uid
-        GROUP BY user_avg.avg_dur
+        FROM weighted, user_wavg
+        GROUP BY user_wavg.avg_dur
     """), {"uid": user_id}).fetchone()
 
-    # ── Unique title diversity (for curiosity/novelty) ────────────
+    # ── Recency-weighted title diversity (curiosity/novelty) ──────
+    # Weight recent watches more — count unique titles seen in last 90/365 days
     er = db.execute(text("""
         SELECT
-            count(*)                  AS total_events,
-            count(DISTINCT title)     AS unique_titles
+            count(*)              AS total_events,
+            count(DISTINCT title) AS unique_titles,
+            -- Weighted unique title count (recent titles count more)
+            sum(CASE
+                WHEN timestamp >= NOW() - INTERVAL '90 days'  THEN 3
+                WHEN timestamp >= NOW() - INTERVAL '365 days' THEN 2
+                ELSE 1
+            END)                  AS weighted_events,
+            count(DISTINCT CASE
+                WHEN timestamp >= NOW() - INTERVAL '365 days' THEN title
+            END)                  AS recent_unique_titles
         FROM events
         WHERE user_id = :uid AND event_type = 'WATCH'
     """), {"uid": user_id}).fetchone()
 
     # ── Recency-weighted DOW distribution for consistency ─────────
-    # Recent 90 days → weight 3×, last year → 2×, older → 1×
-    # This prevents 5-year data from saturating entropy to max
     dow_rows = db.execute(text("""
         SELECT
             extract(dow FROM start_time)::int AS dow,
-            sum(CASE
-                WHEN start_time >= NOW() - INTERVAL '90 days'  THEN 3
-                WHEN start_time >= NOW() - INTERVAL '365 days' THEN 2
-                ELSE 1
-            END) AS weighted_cnt
+            sum(exp(-extract('day' FROM (NOW() - start_time)) / 90.0)) AS weighted_cnt
         FROM sessions WHERE user_id = :uid
         GROUP BY dow ORDER BY dow
     """), {"uid": user_id}).fetchall()
 
-    total_s = sum(row.weighted_cnt for row in dow_rows)
+
+    total_s = sum(float(row.weighted_cnt) for row in dow_rows)
     if total_s > 0 and len(dow_rows) > 1:
-        dow_probs = [row.weighted_cnt / total_s for row in dow_rows]
+        dow_probs = [float(row.weighted_cnt) / total_s for row in dow_rows]
         entropy = -sum(p * math.log(p) for p in dow_probs if p > 0)
         max_entropy = math.log(7)
         consistency_score = min(0.95, entropy / max_entropy)  # hard cap at 95
@@ -86,17 +103,25 @@ for (user_id,) in users:
     std_dur = float(r.std_dur or 0)
     cv = (std_dur / avg_dur) if avg_dur > 0 else 1.0
 
-    total_events = int(er.total_events or 1)
-    unique_titles = int(er.unique_titles or 1)
-    completion_rate = float(r.completion_rate or 0)
+    # Use recency-weighted event counts for curiosity/novelty
+    # recent_unique_titles = distinct titles seen in last 12 months
+    # weighted_events = recent-boosted total event count
+    total_events       = int(er.total_events or 1)
+    unique_titles      = int(er.unique_titles or 1)
+    recent_unique      = int(er.recent_unique_titles or 1)
+    weighted_events    = float(er.weighted_events or 1)
+    completion_rate    = float(r.completion_rate or 0)
 
-    novelty_score = min(1.0, unique_titles / total_events)
-    rewatch_ratio = 1.0 - novelty_score
-    title_entropy = math.log(unique_titles + 1)
+    # Novelty driven by recent titles only (not historical catalogue size)
+    novelty_score  = min(1.0, recent_unique / max(1, unique_titles))
+    rewatch_ratio  = 1.0 - novelty_score
+    # Curiosity entropy uses recency-weighted event volume
+    title_entropy  = math.log(recent_unique + 1) / math.log(max(2, unique_titles + 1))
 
-    active_days = int(r.active_days or 1)
-    span_days = max(1.0, float(r.total_span_days or 1))
+    active_days    = int(r.active_days or 1)
+    span_days      = max(1.0, float(r.total_span_days or 1))
     active_day_ratio = min(1.0, active_days / span_days)
+
 
     raw_features = {
         "avg_session_duration":   avg_dur,           # raw seconds

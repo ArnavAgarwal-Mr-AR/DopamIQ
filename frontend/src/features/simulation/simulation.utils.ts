@@ -3,6 +3,7 @@ export const formatSimulationInput = (scenario: any) => {
     scenario: {
       time: scenario.time,
       device: scenario.device,
+      mode: scenario.mode,
     },
   };
 };

@@ -55,12 +55,13 @@ export const apiClient = async (endpoint: string, options: Options = {}) => {
   const userId = localStorage.getItem(SESSION_KEYS.userId);
 
   const response = await fetch(url, {
+    ...rest,
     headers: {
       ...(rest.headers || { "Content-Type": "application/json" }),
       ...(userId ? { "X-User-ID": userId } : {}),
     },
-    ...rest,
   });
+
 
   if (!response.ok) {
     throw new Error(`API Error: ${response.status}`);

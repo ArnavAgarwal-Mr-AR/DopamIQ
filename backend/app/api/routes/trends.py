@@ -10,5 +10,7 @@ def trends(user=Depends(get_current_user)):
 
 @router.get("/trends/signals")
 def signals(view: str = "day", user=Depends(get_current_user)):
-    print(f"DEBUG: Signals Request - User: {user['user_id']} | View: {view}")
-    return get_behavioral_signals(user["user_id"], view=view)
+    user_id = user["user_id"]
+    res = get_behavioral_signals(user_id, view=view)
+    print(f"DEBUG: Signals Request - User: {user_id} | View: {view} | Count: {len(res)} | First: {res[0] if res else 'None'}")
+    return res

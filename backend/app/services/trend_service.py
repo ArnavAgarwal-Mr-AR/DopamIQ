@@ -1,7 +1,11 @@
+import math
+import logging
 from datetime import datetime, timedelta
 from app.db.session import SessionLocal
 from app.db.models import Score, Session as SessionModel
 from sqlalchemy import func, literal_column, text
+
+logger = logging.getLogger(__name__)
 
 def get_trends(user_id: str):
     db = SessionLocal()
@@ -68,17 +72,21 @@ def get_trends(user_id: str):
     finally:
         db.close()
 
+
 def get_behavioral_signals(user_id: str, view: str = "day"):
     db = SessionLocal()
     try:
         signals = []
+        logger.info(f"FETCH_SIGNALS: User={user_id} View={view}")
+
         if view == "day":
+            # Hourly distribution across all-time history
             sql = text("""
-                SELECT 
-                    (extract(hour from start_time AT TIME ZONE 'Asia/Kolkata'))::int as hour_label,
-                    (avg(total_duration))::float as avg_duration,
-                    (avg(binge_flag::int))::float as binge_rate,
-                    count(session_id) as density
+                SELECT
+                    extract(hour FROM start_time)::int          AS hour_label,
+                    avg(total_duration)::float                  AS avg_duration,
+                    avg(binge_flag::int)::float                 AS binge_rate,
+                    count(session_id)                           AS density
                 FROM sessions
                 WHERE user_id = :user_id
                 GROUP BY hour_label
@@ -86,28 +94,68 @@ def get_behavioral_signals(user_id: str, view: str = "day"):
             """)
             results = db.execute(sql, {"user_id": user_id}).fetchall()
             
-            max_density = max([r.density for r in results]) if results else 1
+            if not results:
+                logger.warning(f"No day data for user {user_id}")
+                return [{"label": f"{i:02d}", "prob": 0, "duration": 0, "binge": 0} for i in range(24)]
+
+            max_density = max([r.density for r in results], default=1)
+
             for i in range(24):
-                label_val = f"{i:02d}"
                 found = next((r for r in results if r.hour_label == i), None)
                 if found:
-                    # Convert to minutes with 1 decimal place for precision
-                    dur_mins = (found.avg_duration or 0) / 60
                     signals.append({
-                        "label": label_val,
+                        "label": f"{i:02d}",
                         "prob": round((found.density / max_density) * 100),
-                        "duration": round(dur_mins, 1),
-                        "binge": round((found.binge_rate or 0) * 100)
+                        "duration": round((found.avg_duration or 0) / 60, 1),
+                        "binge": round((found.binge_rate or 0) * 100),
                     })
                 else:
-                    signals.append({"label": label_val, "prob": 0, "duration": 0, "binge": 0})
-        else:
+                    signals.append({"label": f"{i:02d}", "prob": 0, "duration": 0.0, "binge": 0})
+
+        elif view == "month":
+            # Get the last 30 distinct days of activity
             sql = text("""
-                SELECT 
-                    date_trunc('day', start_time AT TIME ZONE 'Asia/Kolkata') as label,
-                    (avg(total_duration))::float as avg_duration,
-                    (avg(binge_flag::int))::float as binge_rate,
-                    count(session_id) as density
+                WITH active_days AS (
+                    SELECT DISTINCT date_trunc('day', start_time)::date as active_date
+                    FROM sessions
+                    WHERE user_id = :user_id
+                    ORDER BY active_date DESC
+                    LIMIT 30
+                )
+                SELECT
+                    date_trunc('day', s.start_time)::date        AS label,
+                    avg(s.total_duration)::float                 AS avg_duration,
+                    avg(s.binge_flag::int)::float                AS binge_rate,
+                    count(s.session_id)                          AS density
+                FROM sessions s
+                JOIN active_days ad ON date_trunc('day', s.start_time)::date = ad.active_date
+                WHERE s.user_id = :user_id
+                GROUP BY label
+                ORDER BY label
+            """)
+            results = db.execute(sql, {"user_id": user_id}).fetchall()
+            
+            if not results: 
+                logger.warning(f"No month data for user {user_id}")
+                return []
+            
+            max_density = max([r.density for r in results], default=1)
+            for r in results:
+                signals.append({
+                    "label": str(r.label),
+                    "prob": round((r.density / max_density) * 100),
+                    "duration": round((r.avg_duration or 0) / 60, 1),
+                    "binge": round((r.binge_rate or 0) * 100),
+                })
+
+        else: # view == "year"
+            # All-time monthly aggregates
+            sql = text("""
+                SELECT
+                    date_trunc('month', start_time)::date       AS label,
+                    avg(total_duration)::float                  AS avg_duration,
+                    avg(binge_flag::int)::float                 AS binge_rate,
+                    count(session_id)                           AS density
                 FROM sessions
                 WHERE user_id = :user_id
                 GROUP BY label
@@ -115,16 +163,21 @@ def get_behavioral_signals(user_id: str, view: str = "day"):
             """)
             results = db.execute(sql, {"user_id": user_id}).fetchall()
             
-            max_density = max([r.density for r in results]) if results else 1
+            if not results: 
+                logger.warning(f"No year data for user {user_id}")
+                return []
+            
+            max_density = max([r.density for r in results], default=1)
             for r in results:
-                dur_mins = (r.avg_duration or 0) / 60
                 signals.append({
-                    "label": r.label.strftime("%Y-%m-%d"),
+                    "label": r.label.strftime("%Y-%m"),
                     "prob": round((r.density / max_density) * 100),
-                    "duration": round(dur_mins, 1),
-                    "binge": round((r.binge_rate or 0) * 100)
+                    "duration": round((r.avg_duration or 0) / 60, 1),
+                    "binge": round((r.binge_rate or 0) * 100),
                 })
-        
+
+        logger.info(f"SIGNALS_READY: Count={len(signals)}")
         return signals
     finally:
-        db.close()
+        db.close()
+

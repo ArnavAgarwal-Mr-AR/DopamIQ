@@ -28,6 +28,9 @@ def explain_behavior(
 
 from app.services.scoring_service import get_scores
 
+import logging
+logger = logging.getLogger(__name__)
+
 @router.post("/llm/simulate")
 def simulate_behavior(
     req: SimulateRequest,
@@ -36,8 +39,12 @@ def simulate_behavior(
     user_id = user["user_id"]
     scores = get_scores(user_id)
     
-    result = simulate(req.scenario, scores=scores, user_id=user_id, mode=req.scenario.get("mode", "day"))
+    mode = req.scenario.get("mode", "day")
+    logger.info(f"SIMULATE_START: User={user_id} Mode={mode} Scenario={req.scenario}")
+    
+    result = simulate(req.scenario, scores=scores, user_id=user_id, mode=mode)
 
     return {
         "predicted_behavior": result
     }
+
