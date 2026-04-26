@@ -3,7 +3,7 @@ import UploadDropzone from "./UploadDropzone";
 
 const Upload: React.FC = () => {
   return (
-    <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-black text-white flex flex-col overflow-x-hidden">
       
       {/* Main Content Area */}
       <div className="flex-1 flex items-center justify-center px-6 py-4 relative">

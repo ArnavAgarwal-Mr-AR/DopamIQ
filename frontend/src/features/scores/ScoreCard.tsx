@@ -1,5 +1,4 @@
 import React from "react";
-import Card from "../../components/ui/Card";
 
 type Props = {
   title: string;
@@ -18,8 +17,8 @@ const ScoreCard: React.FC<Props> = ({ title, value }) => {
   const [showTooltip, setShowTooltip] = React.useState(false);
 
   return (
-    <Card 
-      className="flex flex-col items-center justify-center p-0 py-4 px-6 group hover:translate-y-[-2px] relative cursor-help"
+    <div 
+      className="glass-card flex flex-col items-center justify-center py-6 px-6 group hover:translate-y-[-2px] relative cursor-help"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
@@ -41,7 +40,7 @@ const ScoreCard: React.FC<Props> = ({ title, value }) => {
           style={{ width: `${value}%` }} 
         />
       </div>
-    </Card>
+    </div>
   );
 };
 

@@ -16,21 +16,21 @@ const VIEW_META: Record<ViewMode, {
   badge: string;
 }> = {
   day: {
-    label: "Dopamiq v2.1 // Daily Pattern Brief",
+    label: "Dopamiq // Daily Pattern Brief",
     context: "This brief interprets your hourly watching distribution — when you are most active, when your sessions run longest, and when binge behaviour peaks within a single day cycle.",
     accent: "text-amber-400/60",
     accentHex: "#f59e0b",
     badge: "Temporal: 24H Window",
   },
   month: {
-    label: "Dopamiq v2.1 // Monthly Cycle Brief",
+    label: "Dopamiq // Monthly Cycle Brief",
     context: "This brief analyses your day-by-day activity over the last 30 days — identifying active streaks, inactive gaps, and whether your engagement is trending up or down recently.",
     accent: "text-emerald-400/60",
     accentHex: "#10b981",
     badge: "Temporal: Last 30 Days",
   },
   year: {
-    label: "Dopamiq v2.1 // Historical Pattern Brief",
+    label: "Dopamiq // Historical Pattern Brief",
     context: "This brief maps your all-time monthly watch behaviour — surfacing seasonal shifts, long-term engagement cycles, and how your habits have evolved year over year.",
     accent: "text-orange-400/60",
     accentHex: "#f97316",

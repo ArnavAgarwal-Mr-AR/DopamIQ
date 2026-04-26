@@ -1,5 +1,4 @@
 import React from "react";
-import Card from "../../components/ui/Card";
 
 type Metric = {
   id: string;

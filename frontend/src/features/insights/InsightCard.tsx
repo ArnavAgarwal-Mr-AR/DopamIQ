@@ -1,5 +1,4 @@
 import React from "react";
-import Card from "../../components/ui/Card";
 
 type Props = {
   title: string;
@@ -8,10 +7,10 @@ type Props = {
 
 const InsightCard: React.FC<Props> = ({ title, description }) => {
   return (
-    <Card>
-      <h4 className="font-semibold text-sm mb-1">{title}</h4>
-      <p className="text-xs text-gray-600">{description}</p>
-    </Card>
+    <div className="glass-card p-4">
+      <h4 className="font-black text-[10px] uppercase tracking-widest mb-1 text-white">{title}</h4>
+      <p className="text-[11px] text-gray-500 font-medium leading-relaxed">{description}</p>
+    </div>
   );
 };
 

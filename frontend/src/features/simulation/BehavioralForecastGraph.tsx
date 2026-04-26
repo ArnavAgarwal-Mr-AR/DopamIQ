@@ -125,7 +125,7 @@ const BehavioralForecastGraph: React.FC<Props> = ({ view }) => {
             dataKey="label"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 900 }}
+            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 8, fontWeight: 900 }}
             tickFormatter={tickFormatter}
             interval={view === 'year' ? 0 : view === 'day' ? 2 : Math.max(1, Math.floor(data.length / 8))}
           />
@@ -181,18 +181,18 @@ const BehavioralForecastGraph: React.FC<Props> = ({ view }) => {
       </ResponsiveContainer>
 
       {/* Tonal Legend */}
-      <div className="flex justify-center gap-12 mt-8">
+      <div className="flex flex-wrap justify-center gap-4 md:gap-12 mt-8">
         {[
           { label: 'PULSE (%)', color: COLORS.pulse },
           { label: 'DEPTH (MIN)', color: COLORS.depth },
           { label: 'RISK (%)', color: COLORS.risk }
         ].map(item => (
-          <div key={item.label} className="flex items-center gap-3 group/legend cursor-help">
+          <div key={item.label} className="flex items-center gap-2 md:gap-3 group/legend cursor-help">
             <div 
               className="h-2 w-2 rounded-full" 
               style={{ backgroundColor: item.color, boxShadow: `0 0 10px ${item.color}` }} 
             />
-            <span className="text-[9px] font-black text-white/50 tracking-[0.4em] uppercase group-hover/legend:text-white transition-colors">
+            <span className="text-[8px] md:text-[9px] font-black text-white/50 tracking-[0.4em] uppercase group-hover/legend:text-white transition-colors">
               {item.label}
             </span>
           </div>

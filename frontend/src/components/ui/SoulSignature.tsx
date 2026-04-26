@@ -12,7 +12,7 @@ const SoulSignature: React.FC = () => {
         Your data is more than a record. It is a legacy of moments.
       </p>
       <p className="text-gray-500 text-[9px] uppercase tracking-widest font-black">
-        DOPAMIQ v2.1 • All rights to your memory reserved.
+        DOPAMIQ • All rights to your memory reserved.
       </p>
     </div>
   );
