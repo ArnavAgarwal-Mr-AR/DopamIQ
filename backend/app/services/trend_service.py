@@ -149,7 +149,7 @@ def get_behavioral_signals(user_id: str, view: str = "day"):
                 })
 
         else: # view == "year"
-            # All-time monthly aggregates
+            # Past 12 active months
             sql = text("""
                 SELECT
                     date_trunc('month', start_time)::date       AS label,
@@ -159,9 +159,13 @@ def get_behavioral_signals(user_id: str, view: str = "day"):
                 FROM sessions
                 WHERE user_id = :user_id
                 GROUP BY label
-                ORDER BY label
+                ORDER BY label DESC
+                LIMIT 12
             """)
             results = db.execute(sql, {"user_id": user_id}).fetchall()
+            
+            # Reverse to plot chronologically (oldest to newest)
+            results = results[::-1]
             
             if not results: 
                 logger.warning(f"No year data for user {user_id}")

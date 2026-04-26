@@ -1,7 +1,7 @@
 import React from 'react';
 import {
-  AreaChart, Area,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine
+  ComposedChart, Area, Line,
+  XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { apiClient, isSessionValid } from '../../services/apiClient';
 
@@ -41,11 +41,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const BehavioralForecastGraph: React.FC<Props> = ({ view }) => {
   const [data, setData] = React.useState<any[]>([]);
 
-  // Tiered Sapphire Palette
+  // Cyber-Vivid Palette for maximum contrast and aesthetic
   const COLORS = {
-    pulse: "#3b82f6",   // Luminous Azure
-    depth: "#ffffff",   // Ice White
-    risk: "#1d4ed8",    // Deep Cobalt
+    pulse: "#8b5cf6",   // Vivid Violet
+    depth: "#06b6d4",   // Electric Cyan
+    risk: "#f43f5e",    // Neon Rose
   };
 
   React.useEffect(() => {
@@ -53,8 +53,13 @@ const BehavioralForecastGraph: React.FC<Props> = ({ view }) => {
 
     const fetchData = async () => {
       try {
-        const signals = await apiClient(`/trends/signals?view=${view}`);
+        let signals = await apiClient(`/trends/signals?view=${view}`);
         if (signals && signals.length) {
+          // Fallback: If the backend hasn't reloaded the new SQL query yet, 
+          // enforce the 12-month limit on the frontend.
+          if (view === 'year' && signals.length > 12) {
+            signals = signals.slice(-12);
+          }
           setData(signals);
         }
       } catch {
@@ -67,10 +72,24 @@ const BehavioralForecastGraph: React.FC<Props> = ({ view }) => {
 
   const tickFormatter = (value: string) => {
     if (view === 'day') return `${value}:00`;
+    
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    
+    // For 'year' view (Past 12 Months), robustly parse "YYYY-MM" to avoid timezone shifts
+    if (view === 'year') {
+      const parts = value.split('-');
+      if (parts.length >= 2) {
+        const yearStr = parts[0].slice(2);
+        const monthIndex = parseInt(parts[1], 10) - 1;
+        if (monthIndex >= 0 && monthIndex < 12) {
+          return `${months[monthIndex]} '${yearStr}`;
+        }
+      }
+    }
+    
+    // Fallback for month view ("YYYY-MM-DD")
     const date = new Date(value);
     if (isNaN(date.getTime())) return value;
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    if (view === 'year') return `${months[date.getMonth()]}`;
     return `${months[date.getMonth()]} ${date.getDate()}`;
   };
 
@@ -85,15 +104,19 @@ const BehavioralForecastGraph: React.FC<Props> = ({ view }) => {
   return (
     <div className="w-full h-[350px] relative group select-none">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+        <ComposedChart data={data} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="colorPulse" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={COLORS.pulse} stopOpacity={0.15} />
+              <stop offset="5%" stopColor={COLORS.pulse} stopOpacity={0.3} />
               <stop offset="95%" stopColor={COLORS.pulse} stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={COLORS.risk} stopOpacity={0.2} />
+              <stop offset="95%" stopColor={COLORS.risk} stopOpacity={0} />
             </linearGradient>
             
             <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feGaussianBlur stdDeviation="4" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
@@ -102,20 +125,22 @@ const BehavioralForecastGraph: React.FC<Props> = ({ view }) => {
             dataKey="label"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: 'rgba(255,255,255,0.15)', fontSize: 8, fontWeight: 900 }}
+            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 900 }}
             tickFormatter={tickFormatter}
-            interval={view === 'day' ? 2 : Math.max(1, Math.floor(data.length / 8))}
+            interval={view === 'year' ? 0 : view === 'day' ? 2 : Math.max(1, Math.floor(data.length / 8))}
           />
           
-          <YAxis hide domain={[0, 100]} />
+          <YAxis yAxisId="left" hide domain={[0, 100]} />
+          <YAxis yAxisId="right" orientation="right" hide domain={[0, 'auto']} />
           
           <Tooltip 
             content={<CustomTooltip />} 
-            cursor={{ stroke: 'rgba(255,255,255,0.05)', strokeWidth: 1 }} 
+            cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} 
           />
           
-          {/* 1. Pulse Area (Solid Blue) */}
+          {/* 1. Pulse Area (Violet, Left Axis) */}
           <Area 
+            yAxisId="left"
             name="PULSE"
             type="monotone" 
             dataKey="prob" 
@@ -127,44 +152,47 @@ const BehavioralForecastGraph: React.FC<Props> = ({ view }) => {
             animationDuration={1500} 
           />
 
-          {/* 2. Depth Area (Dashed White) */}
+          {/* 3. Risk Area (Rose, Left Axis) */}
           <Area 
-            name="DEPTH"
-            type="monotone" 
-            dataKey="duration" 
-            stroke={COLORS.depth} 
-            strokeWidth={2} 
-            strokeDasharray="6 4"
-            fill="transparent"
-            animationDuration={2000} 
-          />
-
-          {/* 3. Risk Area (Solid Deep Blue) */}
-          <Area 
+            yAxisId="left"
             name="RISK"
             type="monotone" 
             dataKey="binge" 
             stroke={COLORS.risk} 
-            strokeWidth={1} 
-            fill="transparent"
+            strokeWidth={2} 
+            fillOpacity={1} 
+            fill="url(#colorRisk)"
             animationDuration={2500} 
           />
-        </AreaChart>
+
+          {/* 2. Depth Line (Cyan, Right Axis) */}
+          <Line 
+            yAxisId="right"
+            name="DEPTH"
+            type="monotone" 
+            dataKey="duration" 
+            stroke={COLORS.depth} 
+            strokeWidth={3} 
+            dot={false}
+            activeDot={{ r: 6, fill: COLORS.depth, stroke: '#000', strokeWidth: 2 }}
+            animationDuration={2000} 
+          />
+        </ComposedChart>
       </ResponsiveContainer>
 
       {/* Tonal Legend */}
-      <div className="flex justify-center gap-10 mt-8">
+      <div className="flex justify-center gap-12 mt-8">
         {[
-          { label: 'PULSE', color: COLORS.pulse, type: 'solid' },
-          { label: 'DEPTH', color: COLORS.depth, type: 'dashed' },
-          { label: 'RISK', color: COLORS.risk, type: 'line' }
+          { label: 'PULSE (%)', color: COLORS.pulse },
+          { label: 'DEPTH (MIN)', color: COLORS.depth },
+          { label: 'RISK (%)', color: COLORS.risk }
         ].map(item => (
           <div key={item.label} className="flex items-center gap-3 group/legend cursor-help">
             <div 
-              className={`h-0.5 w-4 ${item.type === 'dashed' ? 'border-t-2 border-dashed' : 'bg-current'}`} 
-              style={{ color: item.color, backgroundColor: item.type === 'dashed' ? 'transparent' : item.color }} 
+              className="h-2 w-2 rounded-full" 
+              style={{ backgroundColor: item.color, boxShadow: `0 0 10px ${item.color}` }} 
             />
-            <span className="text-[8px] font-black text-white/20 tracking-[0.4em] uppercase group-hover/legend:text-white/50 transition-colors">
+            <span className="text-[9px] font-black text-white/50 tracking-[0.4em] uppercase group-hover/legend:text-white transition-colors">
               {item.label}
             </span>
           </div>
@@ -173,6 +201,8 @@ const BehavioralForecastGraph: React.FC<Props> = ({ view }) => {
     </div>
   );
 };
+
+
 
 
 

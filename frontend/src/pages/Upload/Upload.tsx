@@ -3,44 +3,63 @@ import UploadDropzone from "./UploadDropzone";
 
 const Upload: React.FC = () => {
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 overflow-hidden relative">
-      {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-900/10 blur-[150px] rounded-full pointer-events-none" />
+    <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
       
-      <div className="max-w-2xl w-full space-y-12 relative z-10 text-center">
-        <div className="space-y-4 flex flex-col items-center">
-          <img src="/assets/logo.png" alt="Dopamiq Logo" className="w-20 h-20 mb-2 object-contain brightness-110 drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]" />
-          <h1 className="text-6xl md:text-7xl font-black tracking-tighter bg-gradient-to-b from-white to-gray-500 bg-clip-text text-transparent leading-none">
-            DOPAMIQ
-          </h1>
-          <p className="text-gray-500 text-base md:text-lg font-medium tracking-wide max-w-xl mx-auto leading-relaxed h-auto">
-            Deep within the servers, a version of you exists that you've never met. It knows your 3 AM silence and your comforts. <span className="text-white">Discover your Dopamiq.</span>
-          </p>
-        </div>
-
-        <div className="p-1 rounded-[32px] bg-gradient-to-b from-white/10 to-transparent border border-white/10 shadow-3xl backdrop-blur-md">
-          <UploadDropzone />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-[11px] text-gray-600 uppercase tracking-[0.2em] font-bold">
-          <div className="space-y-3">
-            <span className="text-white">Privacy First</span>
-            <p className="normal-case tracking-normal font-medium text-gray-500">Your data is processed locally in memory. Nothing leaves your browser.</p>
+      {/* Main Content Area */}
+      <div className="flex-1 flex items-center justify-center px-6 py-4 relative">
+        <div className="max-w-3xl w-full space-y-6 relative z-10">
+          
+          {/* Header Section */}
+          <div className="space-y-3 flex flex-col items-center text-center">
+            <img 
+              src="/assets/logo.png" 
+              alt="Dopamiq Logo" 
+              className="w-12 h-12 object-contain" 
+            />
+            <div>
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white italic mb-2">
+                Initialize Neural Audit.
+              </h1>
+              <p className="text-gray-500 text-[11px] md:text-xs font-medium max-w-lg mx-auto leading-relaxed">
+                Upload your Netflix ViewingActivity.zip. The heuristic engine will process your temporal data to construct your behavioral signature.
+              </p>
+            </div>
           </div>
-          <div className="space-y-3">
-            <span className="text-white">Deep Analysis</span>
-            <p className="normal-case tracking-normal font-medium text-gray-500">Our heuristic engines extract behavioral signatures to map your profile.</p>
+
+          {/* Dropzone Container */}
+          <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 lg:p-8 shadow-2xl relative">
+            {/* Subtle Top Accent */}
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            
+            <div className="mb-4 border-b border-white/5 pb-3 flex justify-between items-end">
+              <h3 className="text-[9px] font-black uppercase tracking-[0.5em] text-white/50">
+                Data Ingestion Port
+              </h3>
+              <span className="text-[7px] font-black uppercase tracking-widest text-blue-500/60 border border-blue-500/20 px-2 py-0.5 rounded">
+                Awaiting Payload
+              </span>
+            </div>
+
+            <UploadDropzone />
           </div>
-          <div className="space-y-3">
-            <span className="text-white">Zero Cost</span>
-            <p className="normal-case tracking-normal font-medium text-gray-500">Fulfilling the mission of data transparency, completely free.</p>
+
+          {/* Protocol Metadata */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[9px] text-gray-500 uppercase tracking-[0.2em] font-black border-t border-white/5 pt-6">
+            <div className="space-y-1">
+              <span className="text-white block">01 // Local Processing</span>
+              <p className="normal-case tracking-normal font-medium text-gray-600 text-[9px]">Data is parsed entirely in-memory. Zero persistence.</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-white block">02 // Deep Mapping</span>
+              <p className="normal-case tracking-normal font-medium text-gray-600 text-[9px]">Extracts precise behavioral and temporal signatures.</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-white block">03 // Open Source</span>
+              <p className="normal-case tracking-normal font-medium text-gray-600 text-[9px]">Built for transparency. No paywalls or tracking.</p>
+            </div>
           </div>
         </div>
       </div>
-
-      <footer className="absolute bottom-10 text-[10px] text-gray-700 uppercase tracking-[0.5em] font-black">
-        Unmasking the platform shadow • DOPAMIQ v2.1.0
-      </footer>
     </div>
   );
 };
