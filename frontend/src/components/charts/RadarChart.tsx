@@ -23,7 +23,7 @@ const RadarChart: React.FC<Props> = ({ data }) => {
         <PolarGrid stroke="#ffffff10" />
         <PolarAngleAxis 
           dataKey="subject" 
-          tick={{ fill: '#ccc', fontSize: 11, fontWeight: 'bold', tracking: '0.1em' }} 
+          tick={{ fill: '#ccc', fontSize: 11, fontWeight: 'bold' }} 
         />
         <Radar
           name="Personality"
