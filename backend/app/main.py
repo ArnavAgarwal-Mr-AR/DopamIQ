@@ -37,6 +37,8 @@ async def lifespan(app: FastAPI):
 # =========================
 # FastAPI App
 # =========================
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.VERSION,
@@ -44,6 +46,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://dopamiq.ranmanch.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # =========================
 # Register Routes
