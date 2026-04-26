@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://dopam-iq.vercel.app/:path*"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ]
 }
