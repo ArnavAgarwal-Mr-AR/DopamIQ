@@ -48,13 +48,13 @@ app = FastAPI(
 # =========================
 # Register Routes
 # =========================
-app.include_router(upload.router, prefix="/api", tags=["Upload"])
-app.include_router(scores.router, prefix="/api", tags=["Scores"])
-app.include_router(predictions.router, prefix="/api", tags=["Predictions"])
-app.include_router(meta.router, prefix="/api", tags=["Meta"])
-app.include_router(llm.router, prefix="/api", tags=["LLM"])
-app.include_router(trends.router, prefix="/api", tags=["Trends"])
-app.include_router(manipulation.router, prefix="/api", tags=["Manipulation"])
+app.include_router(upload.router, tags=["Upload"])
+app.include_router(scores.router, tags=["Scores"])
+app.include_router(predictions.router, tags=["Predictions"])
+app.include_router(meta.router, tags=["Meta"])
+app.include_router(llm.router, tags=["LLM"])
+app.include_router(trends.router, tags=["Trends"])
+app.include_router(manipulation.router, tags=["Manipulation"])
 
 
 # =========================
