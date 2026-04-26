@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes";
 import Sidebar from "../components/layout/Sidebar";
+import { Analytics } from "@vercel/analytics/react";
 
 const App: React.FC = () => {
   const [userId, setUserId] = React.useState(localStorage.getItem("netflix_user_id"));
@@ -27,6 +28,7 @@ const App: React.FC = () => {
           </main>
         </div>
       </div>
+      <Analytics />
     </BrowserRouter>
   );
 };
