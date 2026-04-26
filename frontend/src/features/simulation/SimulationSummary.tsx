@@ -76,7 +76,7 @@ const SimulationSummary: React.FC<Props> = ({ data, loading, view }) => {
 
       {/* LLM-generated summary blocks */}
       <div className="space-y-4">
-        {summary.split(' | ').map((block, i) => (
+        {summary.split(' | ').map((block: string, i: number) => (
           <p key={i} className="text-[13px] leading-relaxed text-gray-400 font-medium tracking-tight border-l border-white/5 pl-4">
             {block}
           </p>
