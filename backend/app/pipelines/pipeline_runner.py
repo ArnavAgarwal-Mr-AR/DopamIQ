@@ -127,11 +127,11 @@ def run_pipeline(file_obj: io.BytesIO, user_id: str, file_hash: str = None, file
         db_score = Score(
             user_id=user_id,
             computed_at=sync_timestamp,
-            discipline=scores.get("discipline", 0.0),
-            focus=scores.get("focus", 0.0),
-            curiosity=scores.get("curiosity", 0.0),
-            consistency=scores.get("consistency", 0.0),
-            impulsivity=scores.get("impulsivity", 0.0)
+            discipline=float(scores.get("discipline", 0.0)),
+            focus=float(scores.get("focus", 0.0)),
+            curiosity=float(scores.get("curiosity", 0.0)),
+            consistency=float(scores.get("consistency", 0.0)),
+            impulsivity=float(scores.get("impulsivity", 0.0))
         )
         db.add(db_score)
         
@@ -139,10 +139,10 @@ def run_pipeline(file_obj: io.BytesIO, user_id: str, file_hash: str = None, file
         db_prediction = Prediction(
             user_id=user_id,
             computed_at=sync_timestamp,
-            click_probability=predictions.get("click_probability", 0.0),
-            abandonment_probability=predictions.get("abandonment_probability", 0.0),
-            binge_probability=predictions.get("binge_probability", 0.0),
-            expected_duration=predictions.get("expected_duration", 0.0)
+            click_probability=float(predictions.get("click_probability", 0.0)),
+            abandonment_probability=float(predictions.get("abandonment_probability", 0.0)),
+            binge_probability=float(predictions.get("binge_probability", 0.0)),
+            expected_duration=float(predictions.get("expected_duration", 0.0))
         )
         db.add(db_prediction)
         
@@ -150,9 +150,9 @@ def run_pipeline(file_obj: io.BytesIO, user_id: str, file_hash: str = None, file
         db_meta = MetaMetrics(
             user_id=user_id,
             computed_at=sync_timestamp,
-            predictability=meta_payload.get("predictability", 0.0),
-            drift=meta_payload.get("drift", 0.0),
-            susceptibility=meta_payload.get("susceptibility", 0.0)
+            predictability=float(meta_payload.get("predictability", 0.0)),
+            drift=float(meta_payload.get("drift", 0.0)),
+            susceptibility=float(meta_payload.get("susceptibility", 0.0))
         )
         db.add(db_meta)
 
