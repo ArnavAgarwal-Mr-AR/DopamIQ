@@ -11,3 +11,4 @@ requests
 duckdb
 python-multipart
 pytest
+pydantic-settings
