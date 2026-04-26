@@ -40,7 +40,6 @@ const GaugeChart: React.FC<Props> = ({ value, label }) => {
               dataKey="value"
               fill="#fff"
               cornerRadius={10}
-              shadow="0 0 10px white"
             />
           </RadialBarChart>
         </ResponsiveContainer>
